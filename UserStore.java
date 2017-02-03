@@ -1,9 +1,11 @@
 /*
 Adam Dodson u1600262
+Last Modified: 01:16 03/02/2017
 Preambly Bit:
 Implementation of UserStore via a hashtable where each element in the hashtable
-is a singularly linked list; the keys being the user ID rather than the user
-object as a whole. I decided to make it this way due to:
+is a singularly linked list (i.e. a closed bucket hash table). 
+The keys being the user ID rather than the user object as a whole. 
+I decided to make it this way due to:
 a) getUser takes an ID as the parameter, so mapping to the hashtable makes 
 the time complexity O(1) in best case, however it's O(n) worst if all the ids 
 have the same hashcode.
@@ -226,8 +228,10 @@ public class UserStore implements IUserStore {
 			//Used arrays because I really like using arrays from working with
 			//Pascal/Delphi. Making a linked list implemented merge sort would've
 			//saved space, but computers and servers have more than enough memory.
-			//The other two sorts I was considering, heap and quicksort, kinda 
-			//confuse me, so I picked this one instead.
+			//The provided parameter is an array anyways, it would require some effort
+			//just to convert that array into a linked list, then convert the linked 
+			//list back into an array. The other two sorts I was considering, heap and
+			//quicksort, kinda confuse me, so I picked this one instead.
 			//Time Complexity O(n log(n)) 
 			//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
 			//Space Complexity O(n)
