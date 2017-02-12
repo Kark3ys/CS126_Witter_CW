@@ -264,7 +264,9 @@ public class WeetStore implements IWeetStore {
 		//the time part of the milliseconds number.
 		//To do this we just divide by the number of milliseconds in a day
 		//by the time before modulating it.
-		return (int) (date.getTime() / TimeUnit.DAYS.toMillis(1)) % dateHashSize;
+		int retVal = (int) ((date.getTime() / TimeUnit.DAYS.toMillis(1)) % dateHashSize);
+		if (retVal < 0) retVal += dateHashSize;
+		return retVal;
 	}
 	
 	private int trendHFunc(String tag) {
@@ -276,7 +278,9 @@ public class WeetStore implements IWeetStore {
 			acc = (long) (acc + (int) input[i]);
 			acc = (long) acc * 41;
 		}
-		return (int) acc / trendHashSize;		
+		acc = acc % trendHashSize;
+		if (acc < 0) acc += trendHashSize;
+		return (int) acc;		
 	}
 
 	public boolean addWeet(Weet weet) {
@@ -368,10 +372,13 @@ public class WeetStore implements IWeetStore {
 	private boolean addTagData(Weet weet) {
 		//Return true if tags are added, false if not.
 		String[] tags = extractTags(weet.getMessage());
+		if (tags == null) return false;
+		/*for (int i = 0; i < tags.length; i++) {
+			System.out.println(tags[i]);
+		}*/
 		TrendAndPoint temp, prev;
 		temp = prev = null;
 		boolean match = false;
-		if (tags == null) return false;
 		//If we have tags, we need to insert them into the set of trends.
 		for (int k = 0; k < tags.length; k++) {
 			temp = trendTable[trendHFunc(tags[k])];
@@ -440,7 +447,7 @@ public class WeetStore implements IWeetStore {
 		int j = 0;
 		for (i = 0; i < dateBuckets.length; i++) count += dateBuckets[i].getCurrent().getCount();
 		retArray = new Weet[count];
-		for (i = 0; i < count; i++) {
+		for (i = 0; i < dateBuckets.length; i++) {
 			Weet[] temp = dateBuckets[i].getCurrent().getWeets();
 			for (int k = 0; k < temp.length; k++) {
 				retArray[j] = temp[k];
@@ -519,11 +526,11 @@ public class WeetStore implements IWeetStore {
 		BucketPointDate[] dateBuckets = getWeetDateBuckets();
 		Integer count = 0;
 		Date date = truncDate(dateBefore);
-		count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
-		if (count == null) return null;
+		while(dateBuckets[count].getCheck().compareTo(date) > 0) count++;
+		if (count == 0) return null;
 		count += 1;
-		BucketPointDate[] focusedDateBuckets = new BucketPointDate[count];
-		for (int i = 0; i < count; i++) focusedDateBuckets[i] = dateBuckets[i];
+		BucketPointDate[] focusedDateBuckets = new BucketPointDate[dateBuckets.length - count];
+		for (int i = count; i < dateBuckets.length; i++) focusedDateBuckets[i - count] = dateBuckets[i];
 		return extractWeetsFromBuckets(focusedDateBuckets);
 	}
 
@@ -531,6 +538,7 @@ public class WeetStore implements IWeetStore {
 		//Build list of trending topics.
 		//Just dump all the trends into an array
 		//Then use the merge sort on it again.
+		if (trendCount == 0) return null;
 		Trend[] trends = new Trend[trendCount];
 		TrendAndPoint temp;
 		int j = 0;
@@ -548,36 +556,36 @@ public class WeetStore implements IWeetStore {
 		
 		trends = sortTrends(trends);
 		String[] retArray = new String[10];
-		for (i = 0; i < retArray.length; i++) retArray[i] = trends[i].getTrend();
+		for (i = 0; i < retArray.length && i < trends.length; i++)
+			retArray[i] = trends[i].getTrend();
 		return retArray;
 	}
 	
 	private String[] extractTags(String msg) {
 		//http://stackoverflow.com/a/24694378
 		//http://stackoverflow.com/a/3413712
-		Pattern pat = Pattern.compile("\\b#\\w+\\b", Pattern.CASE_INSENSITIVE);
+		Pattern pat = Pattern.compile("#\\w+", Pattern.CASE_INSENSITIVE);
 		Matcher match = pat.matcher(msg);
 		String temp = "";
-		while (match.find()) temp += match.group() + " ";
+		String holder = "";
+		while (match.find()) {
+			holder = match.group();
+			if (!temp.contains(holder))
+				//Make sure no dupplicates get through.
+				temp += holder + " ";
+		}
 		if (temp == "") return null;
 		temp += "\b";
-		return temp.split(" ");
+		String[] arrTemp = temp.split(" ");
+		//Seems as though there's an extra slot at the end of the array.
+		String[] retArray = new String[arrTemp.length - 1];
+		for (int i = 0; i < retArray.length; i++)
+			retArray[i] = arrTemp[i];
+		return retArray;
 	}
 	
 	private Date truncDate(Date date) {
 		return new Date(date.getTime() / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1));
-	}
-	
-	private Integer binSearchDate(BucketPointDate[] buckets, Date target, int left, int right) {
-		//Binary search through an array of buckets sorted by date.
-		//Returns the index of the date before and after target.
-		if (left == right) return left;
-		int mid = (left+right)/2;
-		int comp = buckets[mid].getCheck().compareTo(target);
-		if (comp < 0) return binSearchDate(buckets, target, mid+1, right);
-		if (comp > 0) return binSearchDate(buckets, target, left, mid-1);
-		if (comp == 0) return mid;
-		return null; //Return null if we get here, something has gone wrong.
 	}
 	
 	private BucketPointDate[] sortByDate(BucketPointDate[] arrIn) {
@@ -671,7 +679,9 @@ public class WeetStore implements IWeetStore {
 		//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
 		//Space Complexity O(n)
 		int length = arrIn.length;	//Find array length for reference.
+		//System.out.println(length);
 		if (length == 1) return arrIn;	//No need to split
+		if (length < 1) throw new NullPointerException("You fucked up the merge");
 		Trend[] arrLeft = new Trend[length/2];
 		Trend[] arrRight = new Trend[length - length/2];
 		//Get the left and right side of the array, on odd numbers,
@@ -694,7 +704,7 @@ public class WeetStore implements IWeetStore {
 		//System.out.println("Array Lengths: L=" + arrLeft.length + " R=" + arrRight.length);
 		while (i < arrLeft.length && j < arrRight.length) {
 			//System.out.println("Nums: i=" + i + " j=" + j + " k=" + k);
-			//System.out.println("Compare=" + arrLeft[i].getDateJoined().compareTo(arrRight[j].getDateJoined()));
+			//System.out.println("Compare=" + (arrLeft[i].getCount() - arrRight[j].getCount()));
 			if(arrLeft[i].getCount() > arrRight[j].getCount()) {
 				retArray[k] = arrLeft[i];
 				//System.out.println("AddL");

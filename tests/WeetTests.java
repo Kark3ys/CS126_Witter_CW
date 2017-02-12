@@ -3,6 +3,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 
 import uk.ac.warwick.java.cs126.models.User;
@@ -14,44 +15,78 @@ public class WeetTests {
     private Random random;
 		//Used to generate random numbers.
 		private WeetStore weets;
-		private int randInt;
+		private User[] users;//Simply array of a few users to test making some posts.
+		private String[] setTrends;
 		
 		public WeetTests() {
-			weets = new UserStore();
+			weets = new WeetStore();
 			random = new Random();
-			randInt = 0;
+			users = new User[5];
+			setTrends = new String[] {
+				"#wednesday", "#dude", "#DCS", "#hydrate",
+				"#morning", "#TESCO", "#Switch", "#Nintendo",
+				"#Witter", "#2hu", "#Warwick", "#Coventry"
+			};
+			int i = 0;
+			for (i = 0; i < 5; i++) {
+				users[i] = new User("Spammer", i, new Date((long) random.nextInt()));
+			}
 		}
 		public int testAddWeet() 
 		{
 			//Add a single weet with random id numbers.
 			//Returns the ID number used if successful, else return -1.
-			randInt = random.nextInt(1000000);
-			User temp = new User("Just A Dude" + randInt % 10,randInt, new Date((long) random.nextInt()));
-			System.out.println(userToString(temp));
-			return ((users.addUser(temp)) ? randInt : -1);
+			int randInt = random.nextInt(1000000); //Pick a random ID number for the weet
+			String strTrend = "";
+			for (int i = 0; i < random.nextInt(5); i++) {
+				strTrend += setTrends[random.nextInt(12)] + " ";
+			}
+			Weet temp = new Weet(randInt, users[random.nextInt(5)].getId(), strTrend 
+				+ "A weet " + randInt, new Date((long) random.nextInt()));
+			System.out.println(weetToString(temp));
+			return ((weets.addWeet(temp)) ? randInt : -1);
 		}
 		
-		public boolean testAddWithID(int uid) {
-			randInt = random.nextInt(1000000);
-			User temp = new User("Just A Dude" + randInt % 10, uid, new Date((long) random.nextInt()));
-			return users.addUser(temp);
+		public boolean testAddWithID(int wid) {
+			Weet temp = new Weet(wid, users[random.nextInt(5)].getId(), "Conflicting Tweet " + wid, new Date((long) random.nextInt()));
+			return weets.addWeet(temp);
 		}
 		
-		public User testGetUser(int uid) {
+		public Weet testGetWeet(int wid) {
 			//Return null if user not found.
-			return users.getUser(uid);
+			return weets.getWeet(wid);
 		}
 		
-		public User[] testGetUsers() {
-			return users.getUsers();
+		public Weet[] testGetWeets() {
+			return weets.getWeets();
 		}
 		
-		public User[] testGetUsersContaining(String q) {
-			return users.getUsersContaining(q);
+		public Weet[] testGetWeetsByUser(User u) {
+			return weets.getWeetsByUser(u);
 		}
 		
-		public User[] testGetUsersJoinedBeforeDate(Date date) {
-			return users.getUsersJoinedBefore(date);
+		public Weet[] testGetWeetsContaining(String q) {
+			return weets.getWeetsContaining(q);
+		}
+		
+		public Weet[] testGetWeetsOn(Date d) {
+			return weets.getWeetsOn(d);
+		}
+		
+		public Weet[] testGetWeetsBefore(Date d) {
+			return weets.getWeetsBefore(d);
+		}
+		
+		public String[] testGetTrending() {
+			return weets.getTrending();
+		}
+		
+		public String[] getTrends() {
+			return setTrends;
+		}
+		
+		public User[] getWorkingUsers() {
+			return users;
 		}
 		
 		public String arrUserToString(User[] arr) {
@@ -64,72 +99,118 @@ public class WeetTests {
 			return retString;
 		}
 		
+		public String arrUserToString() {
+			//Deal with the working user array instead.
+			if (users == null) return "NO ARRAY";
+			String retString = "[\n";
+			for (int i = 0; i < users.length; i++) {
+				retString += userToString(users[i]) + "\n";
+			}
+			retString += "]";
+			return retString;
+		}
+		
+		public String arrWeetToString(Weet[] arr) {
+			if (arr == null) return "NO ARRAY";
+			String retString = "[\n";
+			for (int i = 0; i < arr.length; i++) {
+				retString += weetToString(arr[i]) + "\n";
+			}
+			retString += "]";
+			return retString;			
+		}
+		
 		public String userToString(User u) {
 			if (u == null) return "NO USER";
 			return "(" + u.getName() + " " + u.getId() + " " + u.getPrettyDateJoined() + ")";
 		}
 		
-		public static void main(String[] args) {
-		UserTests test = new UserTests();
+		public String weetToString(Weet w) {
+			if (w == null) return "NO WEET";
+			return "(" + w.getId() + " - " + w.getUserId() + " - " + w.getMessage() + " - " + w.getPrettyDateWeeted() + ")";
+		}
 		
-		System.out.println("Start UserTests");
+		public static void main(String[] args) {
+		WeetTests test = new WeetTests();
+		System.out.println("Start WeetTests");
 		//Initialise Stuff
-		final int idLength = 10;
-		User[] users;
+		final int idLength = 30;
+		User[] users = test.getWorkingUsers();
+		Weet[] weets;
 		int[] ids = new int[idLength];
 		int i = 0;
 		int j = 0;
 		System.out.println();
-		System.out.println("Add " + idLength + " Users");
-		//Add ten users to the userStore with random IDs.
+		System.out.println("Add " + idLength + " Weets");
+		//Add 30 users to the userStore with random IDs.
 		while (i < idLength) {
-			j = test.testAddUser();
+			j = test.testAddWeet();
 			if (j > -1) {
 				ids[i] = j;
-				System.out.println("Added User to Array, ID = " + j);
+				System.out.println("Added Weet to Array, ID = " + j);
 				i++;
 			} else {
-				System.out.println("Collision of IDs, user not added, ID = " + j);
+				System.out.println("Collision of IDs, weet not added.");
 			}
 		}
 		System.out.println();
-		System.out.println("Check collisions with " + idLength + " Users");
+		System.out.println("Check collisions with " + idLength + " Weets");
 		//Explicit Collision Tests.
 		for (i = 0; i < idLength; i++)	
 			System.out.println("Success in adding while ID exists: " + test.testAddWithID(ids[i]));
 		
 		System.out.println();
 		System.out.println("Check getting by ID");
-		//Check we can access all ten users by ID.
+		//Check we can access all 30 weets by ID.
 		for (i = 0; i < idLength; i++)
-			System.out.println("Success in getting: " + (test.testGetUser(ids[i]) != null));
+			System.out.println("Success in getting: " + (test.testGetWeet(ids[i]) != null));
 		
-		//Extract all users added so far.
-		users = test.testGetUsers();
+		//Extract all weets added so far.
 		System.out.println();
-		System.out.println("Get All Users Test: " + (users != null));
-		System.out.println(test.arrUserToString(users));
+		weets = test.testGetWeets();
+		System.out.println("Get All Weets Test: " + (weets != null));
+		System.out.println(test.arrWeetToString(weets));
 		//Array of users will be sorted by date, therefore the middle value should
 		//bisect the list in terms of dates. Used later.
-		Date dateTemp = users[idLength / 2].getDateJoined();
+		System.out.println(test.arrUserToString());
+		Date dateTemp = weets[idLength / 2].getDateWeeted();
+		
+		//Check weets by user.
+		System.out.println();
+		System.out.println("Check weets made by user ID: " + users[0].getId());
+		weets = test.testGetWeetsByUser(users[0]);
+		System.out.println(test.arrWeetToString(weets));
 		
 		//Check for string containing.
 		System.out.println();
-		System.out.println("Check generic name part i.e. query = 'Just'");
-		users = test.testGetUsersContaining("Just");
-		System.out.println(test.arrUserToString(users));
+		System.out.println("Check generic name part i.e. query = 'weet'");
+		weets = test.testGetWeetsContaining("weet");
+		System.out.println(test.arrWeetToString(weets));
 		System.out.println();
-		System.out.println("Check against an ID number's LSD = " + ids[idLength / 2] % 10);
-		users = test.testGetUsersContaining("" + (ids[idLength / 2] % 10));
-		System.out.println(test.arrUserToString(users));
-		
-		//Check for joined before date.
+		String[] arrStrTrends = test.getTrends();
+		for (i = 0; i < arrStrTrends.length; i++) {
+			System.out.println("Check weet contains string = " + arrStrTrends[i]);
+			weets = test.testGetWeetsContaining(arrStrTrends[i]);
+			System.out.println(test.arrWeetToString(weets));
+		}		
+		//Check for weeted before date.
 		System.out.println();
 		System.out.println("Check before date: " + dateTemp.toString());
-		System.out.println(test.arrUserToString(test.testGetUsersJoinedBeforeDate(dateTemp)));
+		weets = test.testGetWeetsBefore(dateTemp);
+		System.out.println(test.arrWeetToString(weets));
 		
-		System.out.println("End UserStore Tests");
+		//Check for weeted on date.
+		System.out.println();
+		System.out.println("Check on date: " + dateTemp.toString());
+		weets = test.testGetWeetsOn(dateTemp);
+		System.out.println(test.arrWeetToString(weets));
 		
+		//Check trends.
+		System.out.println();
+		System.out.println("Get trending topics.");
+		arrStrTrends = test.testGetTrending();
+		for (i = 0; i < arrStrTrends.length; i++) System.out.println(arrStrTrends[i]);
 		
+		System.out.println("End WeetStore Tests");
 	}
 }
