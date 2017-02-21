@@ -524,14 +524,29 @@ public class WeetStore implements IWeetStore {
 	public Weet[] getWeetsBefore(Date dateBefore) {
 		if (weetCount == 0) return null;
 		BucketPointDate[] dateBuckets = getWeetDateBuckets();
-		Integer count = 0;
+		Integer count = null;
 		Date date = truncDate(dateBefore);
-		while(dateBuckets[count].getCheck().compareTo(date) > 0) count++;
-		if (count == 0) return null;
+		count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
+		if (count == null) return null;
 		count += 1;
 		BucketPointDate[] focusedDateBuckets = new BucketPointDate[dateBuckets.length - count];
 		for (int i = count; i < dateBuckets.length; i++) focusedDateBuckets[i - count] = dateBuckets[i];
 		return extractWeetsFromBuckets(focusedDateBuckets);
+	}
+	
+	private Integer binSearchDate(BucketPointDate[] bpd, Date target, int left, int right) {
+		//Binary search through an array of bpd sorted by date.
+		//Returns the index of the date before and after target.
+		//System.out.println("Bin Sort, Left: " + left + " Right: " + right);
+		if (left == right) return left;
+		int mid = (left+right)/2;
+		//System.out.println("\tMid: " + mid);
+		int comp = bpd[mid].getCheck().compareTo(target);
+		//System.out.println("\tComp: " + comp);
+		if (comp > 0) return binSearchDate(bpd, target, mid+1, right);
+		else if (comp < 0) return binSearchDate(bpd, target, left, mid-1);
+		else if (comp == 0) return mid;
+		return null; //Return null if we get here, something has gone wrong.
 	}
 
 	public String[] getTrending() {

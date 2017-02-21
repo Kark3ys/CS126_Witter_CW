@@ -1,6 +1,5 @@
 /*
 Adam Dodson u1600262
-Last Modified: 01:16 03/02/2017
 Preambly Bit:
 Implementation of UserStore via a hashtable where each element in the hashtable
 is a singularly linked list (i.e. a closed bucket hash table). 
@@ -13,6 +12,8 @@ b) Allows a base line of error handling if a dupplicate ID is attempted to be
 inserted into the table. If the keys were objects, those two users would 
 be different objects with the same ID, and would be inserted into the table.
 */
+
+//Need to turn a lot of this stuff into generics with the supress unchecked stuff.
 
 package uk.ac.warwick.java.cs126.services;
 import uk.ac.warwick.java.cs126.models.User;
@@ -180,8 +181,8 @@ public class UserStore implements IUserStore {
 		count = binSearchDate(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
 		if (count == null) return null;
 		count += 1;
-		User[] retArray = new User[count];
-		for (int i = 0; i < count; i++) retArray[i] = arrAllUsers[i];
+		User[] retArray = new User[arrAllUsers.length - count];
+		for (int i = count; i < arrAllUsers.length; i++) retArray[i-count] = arrAllUsers[i];
 		//We simply want to truncate the array of the latter parts which contains
 		//users registered after or on the specified date.
 		//As a result sorting isn't needed.
@@ -195,12 +196,15 @@ public class UserStore implements IUserStore {
 	private Integer binSearchDate(User[] users, Date target, int left, int right) {
 		//Binary search through an array of users sorted by date.
 		//Returns the index of the date before and after target.
+		//System.out.println("Bin Sort, Left: " + left + " Right: " + right);
 		if (left == right) return left;
 		int mid = (left+right)/2;
+		//System.out.println("\tMid: " + mid);
 		int comp = users[mid].getDateJoined().compareTo(target);
-		if (comp < 0) return binSearchDate(users, target, mid+1, right);
-		if (comp > 0) return binSearchDate(users, target, left, mid-1);
-		if (comp == 0) return mid;
+		//System.out.println("\tComp: " + comp);
+		if (comp > 0) return binSearchDate(users, target, mid+1, right);
+		else if (comp < 0) return binSearchDate(users, target, left, mid-1);
+		else if (comp == 0) return mid;
 		return null; //Return null if we get here, something has gone wrong.
 	}
 	

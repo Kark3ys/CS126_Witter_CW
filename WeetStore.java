@@ -1,6 +1,26 @@
 /*
 Adam Dodson u1600262
+Preambly Bit:
+I like closed bucket hashtables.
+I also like linked lists inside buckets.
+Space efficiency isn't the main concern, time efficieny is for apps dealing
+with a large number of clients nowadays (like twitter).
+Therefore there are four hashtables used to represent WeetStore.
+Two of these hashtables point to buckets that point to linked lists, rather
+than pointing straight to a linked list.
+Weets stored by weet ID have their own cbht.
+Weets stored in buckets of user ID, where the buckets are accessed via a 
+hash table. These hashtables point to linked lists of buckets.
+Weets stored by date is done in exactly the same way, except their hash function
+is using date.
+The Trending tags are also stored in their own hashtable as a set of tags, with
+a separate count variable to aid in sorting when the top tags are asked for.
+Though the end result is quite a large (still O(n)) amount of data stored on the
+server, the resulting time complexity for certain access operations is greatly
+reduced.
 */
+
+//Need to turn a lot of this stuff into generics with the supress unchecked stuff.
 
 package uk.ac.warwick.java.cs126.services;
 
@@ -22,6 +42,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 class WeetAndPoint {
+	//Wrapper item for the singly linked list implementation of WeetStore
 	private Weet current;
 	private WeetAndPoint next;
 	
@@ -43,7 +64,7 @@ class WeetAndPoint {
 	}
 }
 
-class WeetBucket<E> {
+class WeetBucket {
 	//WeetAndPoint Single Linked Lists sorted by Date.
 	private WeetAndPoint head;
 	private int count;
@@ -54,6 +75,10 @@ class WeetBucket<E> {
 	}
 	
 	public boolean insertAndSort(Weet wt) {
+		//Quickly insert the item via an insertion sort with one run through
+		//Time Complexity: O(n)
+		//Means that all weets are sorted by date making it a lot quicker to output
+		//The weets when requested.
 		boolean inserted = false;
 		count++;
 		WeetAndPoint temp = new WeetAndPoint(wt);
@@ -124,6 +149,7 @@ class BucketPointUID {
 	}
 	
 	public void gottaPointFast(BucketPointUID youreTooSlow) {
+		//Sonic Speed: O(1)
 		next = youreTooSlow;
 	}
 	
@@ -159,6 +185,7 @@ class BucketPointDate {
 	}
 	
 	public void gottaPointFast(BucketPointDate youreTooSlow) {
+		//Sonic Speed: O(1)
 		next = youreTooSlow;
 	}
 	
@@ -285,7 +312,21 @@ public class WeetStore implements IWeetStore {
 
 	public boolean addWeet(Weet weet) {
 		
+		boolean result = false;
+		result = addWeetIDTable(weet);
+		if (result) result = addWeetDateBucket(weet);
+		if (result) result = addWeetUserBucket(weet);
+		if (result) addTagData(weet);	//We don't really care if a tag was added.
+		
+		return result;
+	}
+	
+	private boolean addWeetIDTable(Weet weet) {
 		//INSERT INTO WID HT
+		//Time Complexity
+		//	Best Case: O(1)
+		//	Worst Case: O(n) - All weet ids point to the same hashtable index
+		//		after passing through the hash function.
 		int wid = weet.getId();
 		if (getWeet(wid) != null) return false;
 		WeetAndPoint temp = idHashtable[idHFunc(wid)];
@@ -301,15 +342,16 @@ public class WeetStore implements IWeetStore {
 			prev.gottaPointFast(new WeetAndPoint(weet));
 		}
 		this.weetCount++;
-		
-		addWeetDateBucket(weet);
-		addWeetUserBucket(weet);
-		addTagData(weet);
-		
 		return true;
 	}
 	
 	private boolean addWeetDateBucket(Weet weet) {
+		//Technically the buckets are for each day.
+		//Time Complexity
+		//	Best Case: O(1)
+		//	Worst Case: O(n) - All weet dates point to the same hashtable index
+		//		after passing through the hash function. Or weets are made all on the
+		//		same day.
 		Date wDate = truncDate(weet.getDateWeeted());
 		//Get the date from the day only, truncate the hours, minutes, seconds.
 		BucketPointDate temp = dateHashtable[dateHFunc(wDate)];
@@ -341,6 +383,11 @@ public class WeetStore implements IWeetStore {
 	}
 	
 	private boolean addWeetUserBucket(Weet weet) {
+		//Time Complexity
+		//	Best Case: O(1)
+		//	Worst Case: O(n) - All weet user ids point to the same hashtable index
+		//		after passing through the hash function. Or weets are made by the same
+		//		user.
 		int uid = weet.getUserId();
 		BucketPointUID temp = uidHashtable[uidHFunc(uid)];
 		BucketPointUID prev = null;
@@ -370,6 +417,11 @@ public class WeetStore implements IWeetStore {
 	}
 	
 	private boolean addTagData(Weet weet) {
+		//Time Complexity
+		//	Best Case: O(1)
+		//	Worst Case: O(n) - All weet user ids point to the same hashtable index
+		//		after passing through the hash function. Or weets are made by the same
+		//		user.
 		//Return true if tags are added, false if not.
 		String[] tags = extractTags(weet.getMessage());
 		if (tags == null) return false;
@@ -420,6 +472,9 @@ public class WeetStore implements IWeetStore {
 	}
 	
 	private BucketPointDate[] getWeetDateBuckets() {
+		//Run through the date bucket hashtable and collect all buckets.
+		//Sort said buckets by date, then return them buckets.
+		//Time complexity: O(d) where "d" is the size of the date bucket hashtable.
 		if (weetCount == 0) return null;
 		BucketPointDate[] dateBuckets = new BucketPointDate[dateCount];
 		BucketPointDate temp;
@@ -436,10 +491,14 @@ public class WeetStore implements IWeetStore {
 			}
 		}
 		dateBuckets = sortByDate(dateBuckets);
+
 		return dateBuckets;
 	}
 	
 	private Weet[] extractWeetsFromBuckets(BucketPointDate[] dateBuckets) {
+		//Pulls all the weets out of the array of buckets provided.
+		//Time Complexity: O(n) as manually pulling out all weets from provided date
+		//	buckets. At least no need for another sorting algorithm on the weets.
 		if (dateBuckets == null) return null;
 		Weet[] retArray;
 		int count = 0;
@@ -461,6 +520,7 @@ public class WeetStore implements IWeetStore {
 		//Just check for an existing user id bucket, and if it's there, 
 		//dump the contents as the return value.
 		//Due to the insertion sort for each bucket, it should be date ordered.
+		//Time Complexity: O(n)
 		if (weetCount == 0) return null;
 		int uid = usr.getId();
 		BucketPointUID temp = uidHashtable[uidHFunc(uid)];
@@ -475,6 +535,7 @@ public class WeetStore implements IWeetStore {
 
 	public Weet[] getWeetsContaining(String query) {
 		//This one is just brute force, nothing more nothing less.
+		//Time Complexity: O(n)
 		if (weetCount == 0) return null;
 		Weet[] arrAllWeets = getWeets();
 		Weet[] retArray;
@@ -509,6 +570,8 @@ public class WeetStore implements IWeetStore {
 		//Find the bucket corresponding to a specific day.
 		//Weets in each bucket should be sorted by date i.e. the milliseconds date
 		//not my truncated version.
+		//Time Complexity: O(1) YAY!!!!! 
+		//	But then O(n) for extracting the weets from said bucket :') 
 		if (weetCount == 0) return null;
 		Date date = truncDate(dateOn);
 		BucketPointDate temp = dateHashtable[dateHFunc(date)];
@@ -517,27 +580,46 @@ public class WeetStore implements IWeetStore {
 			match = temp.getCheck().equals(date);
 			if (!match) temp = temp.getNext();
 		}
-		if (temp == null) return null;
+		if (temp == null) return null;	//No weets made on that day.
 		return temp.getCurrent().getWeets();
 	}
 
 	public Weet[] getWeetsBefore(Date dateBefore) {
+		//Gets all date buckets, sorts them, then truncates the returned date bucket
+		//	array so that everything is still ordered but it's the time period we want.
+		//Time Complexity: O(n)
 		if (weetCount == 0) return null;
 		BucketPointDate[] dateBuckets = getWeetDateBuckets();
-		Integer count = 0;
+		Integer count = null;
 		Date date = truncDate(dateBefore);
-		while(dateBuckets[count].getCheck().compareTo(date) > 0) count++;
-		if (count == 0) return null;
+		count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
+		if (count == null) return null;
 		count += 1;
 		BucketPointDate[] focusedDateBuckets = new BucketPointDate[dateBuckets.length - count];
 		for (int i = count; i < dateBuckets.length; i++) focusedDateBuckets[i - count] = dateBuckets[i];
 		return extractWeetsFromBuckets(focusedDateBuckets);
+	}
+	
+	private Integer binSearchDate(BucketPointDate[] bpd, Date target, int left, int right) {
+		//Binary search through an array of bpd sorted by date.
+		//Returns the index of the date before and after target.
+		//System.out.println("Bin Sort, Left: " + left + " Right: " + right);
+		if (left == right) return left;
+		int mid = (left+right)/2;
+		//System.out.println("\tMid: " + mid);
+		int comp = bpd[mid].getCheck().compareTo(target);
+		//System.out.println("\tComp: " + comp);
+		if (comp > 0) return binSearchDate(bpd, target, mid+1, right);
+		else if (comp < 0) return binSearchDate(bpd, target, left, mid-1);
+		else if (comp == 0) return mid;
+		return null; //Return null if we get here, something has gone wrong.
 	}
 
 	public String[] getTrending() {
 		//Build list of trending topics.
 		//Just dump all the trends into an array
 		//Then use the merge sort on it again.
+		//Time Complexity: O(n) for extracting the data from the trending hashtable
 		if (trendCount == 0) return null;
 		Trend[] trends = new Trend[trendCount];
 		TrendAndPoint temp;
@@ -564,6 +646,7 @@ public class WeetStore implements IWeetStore {
 	private String[] extractTags(String msg) {
 		//http://stackoverflow.com/a/24694378
 		//http://stackoverflow.com/a/3413712
+		//Used stack overflow to see how I could build a string array.
 		Pattern pat = Pattern.compile("#\\w+", Pattern.CASE_INSENSITIVE);
 		Matcher match = pat.matcher(msg);
 		String temp = "";
@@ -581,14 +664,20 @@ public class WeetStore implements IWeetStore {
 		String[] retArray = new String[arrTemp.length - 1];
 		for (int i = 0; i < retArray.length; i++)
 			retArray[i] = arrTemp[i];
+		//retArray needed as there always seemed to be an empty element appended
+		//to the arrTemp when splitting the string, so just need to do a copy and
+		//truncate.
 		return retArray;
 	}
 	
 	private Date truncDate(Date date) {
+		//Convert a date object into a date for the start of a particular day.
 		return new Date(date.getTime() / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1));
 	}
 	
 	private BucketPointDate[] sortByDate(BucketPointDate[] arrIn) {
+		//I really need to stop copying and pasting this merge sort and make a more generalised version.
+		
 		//This merge sort is a literal copy paste from UserStore.java.
 		//It's been modified to work with the BucketPoint objects and sort them
 		//By the date stored int their check. As a result it won't work with 
