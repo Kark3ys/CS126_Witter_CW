@@ -264,8 +264,8 @@ public class WeetStore implements IWeetStore {
 	private int trendCount;
 	
 	public WeetStore() {
-		idHashSize = 1000000;
-		uidHashSize = 1000000;
+		idHashSize = 100000;
+		uidHashSize = 100000;
 		dateHashSize = 100000;
 		trendHashSize = 100000;
 		idHashtable = new WeetAndPoint[idHashSize];
@@ -626,13 +626,11 @@ public class WeetStore implements IWeetStore {
 		int j = 0;
 		int i = 0;
 		for (i = 0; i < trendHashSize; i++) {
-			if (trendTable[i] != null) {
-				temp = trendTable[i];
-				while (temp != null) {
-					trends[j] = temp.getTrend();
-					j++;
-					temp = temp.getNext();
-				}
+			temp = trendTable[i];
+			while (temp != null) {
+				trends[j] = temp.getTrend();
+				j++;
+				temp = temp.getNext();
 			}
 		}
 		

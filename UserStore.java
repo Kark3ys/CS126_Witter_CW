@@ -54,16 +54,16 @@ class UserAndPoint {
 
 public class UserStore implements IUserStore {
 	//Implement UserStore as a hashtable based on User.id.
-	//Hash map will have a capacity of 1000000.
-	//Hash function is simply X mod 1000000.
-	//This means that users are sorted into bins based on the last 6 digits of
+	//Hash map will have a capacity of 100000.
+	//Hash function is simply X mod 100000.
+	//This means that users are sorted into bins based on the last 5 digits of
 	//their user id.
 	private int capacity;
 	private UserAndPoint[] hashtable;
 	private int userCount;
 	
 	public UserStore() {
-		capacity = 1000000;
+		capacity = 100000;
 		hashtable = new UserAndPoint[capacity];
 		userCount = 0;
 		//Array is initialized at null.
