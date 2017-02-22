@@ -167,7 +167,7 @@ public class FollowerStore implements IFollowerStore {
 	private int FCObjCount;
 
 	public FollowerStore() {
-		frCap = fcCap = 100000;
+		frCap = fcCap = 10000;
 		frHashtable = new FollowAndPoint[frCap][frCap];
 		fcHashtable = new FCAndPoint[fcCap];
 		followCount = FCObjCount = 0;
@@ -232,6 +232,7 @@ public class FollowerStore implements IFollowerStore {
 	public int[] getFollowers(int uid) {
 		if (this.followCount == 0) return null;
 		FollowRelation[] arrFR = getFollowersFR(uid);
+		if (arrFR == null) return null;
 		int[] retArray = new int[arrFR.length];
 		for (int i = 0; i < arrFR.length; i++) {
 			retArray[i] = arrFR[i].getF();
@@ -273,6 +274,7 @@ public class FollowerStore implements IFollowerStore {
 	public int[] getFollows(int uid) {
 		if (this.followCount == 0) return null;
 		FollowRelation[] arrFR = getFollowsFR(uid);
+		if (arrFR == null) return null;
 		int[] retArray = new int[arrFR.length];
 		for (int i = 0; i < arrFR.length; i++) {
 			retArray[i] = arrFR[i].getL();
@@ -347,8 +349,8 @@ public class FollowerStore implements IFollowerStore {
 		if (set1 == null) return null;
 		FollowRelation[] set2 = getFollowersFR(uid2);
 		if (set2 == null) return null;
-		set1 = sortByLead(set1);
-		set2 = sortByLead(set2);
+		set1 = sortByFollow(set1);
+		set2 = sortByFollow(set2);
 		FollowRelation[] tempSet = new FollowRelation[((set1.length > set2.length) ? set1.length : set2.length)];
 		int i = 0;
 		int j = 0;
@@ -363,6 +365,8 @@ public class FollowerStore implements IFollowerStore {
 			else {
 				tempSet[k] = set1[i];
 				k++;
+				i++;
+				j++;
 			}
 		}
 		if (k == 0) return null;
@@ -371,7 +375,7 @@ public class FollowerStore implements IFollowerStore {
 		
 		int[] retArray = new int[k];
 		for (i = 0; i < k; i++)
-			retArray[i] = tempSet[k].getF();
+			retArray[i] = tempSet[i].getF();
 		return retArray;
 	}
 
@@ -397,6 +401,8 @@ public class FollowerStore implements IFollowerStore {
 			else {
 				tempSet[k] = set1[i];
 				k++;
+				i++;
+				j++;
 			}
 		}
 		if (k == 0) return null;
@@ -404,7 +410,7 @@ public class FollowerStore implements IFollowerStore {
 		
 		int[] retArray = new int[k];
 		for (i = 0; i < k; i++)
-			retArray[i] = tempSet[k].getL();
+			retArray[i] = tempSet[i].getL();
 		return retArray;
 	}
 		
@@ -547,7 +553,13 @@ public class FollowerStore implements IFollowerStore {
 		//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
 		//Space Complexity O(n)
 		int length = len;	//Find array length for reference.
-		if (length == 1) return arrIn;	//No need to split
+		if (length == 1) {
+			FollowRelation[] arr = new FollowRelation[1];
+			arr[0] = arrIn[0];
+			//These first two lines needed on the offshoot that the list provided to
+			//begin with is longer than len, where len==1.
+			return arr;	//No need to split
+		}
 		FollowRelation[] arrLeft = new FollowRelation[length/2];
 		FollowRelation[] arrRight = new FollowRelation[length - length/2];
 		//Get the left and right side of the array, on odd numbers,
