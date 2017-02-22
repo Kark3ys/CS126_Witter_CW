@@ -1,5 +1,6 @@
 /*
 Adam Dodson u1600262
+Repo: https://github.com/Kark3ys/CS126_Witter_CW
 Preambly Bit:
 Implementation of UserStore via a hashtable where each element in the hashtable
 is a singularly linked list (i.e. a closed bucket hash table). 

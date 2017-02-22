@@ -1,6 +1,6 @@
 /*
 Adam Dodson u1600262
-Last Modified: 01:16 03/02/2017
+Repo: https://github.com/Kark3ys/CS126_Witter_CW
 Preambly Bit:
 Implementation of UserStore via a hashtable where each element in the hashtable
 is a singularly linked list (i.e. a closed bucket hash table). 
@@ -13,6 +13,8 @@ b) Allows a base line of error handling if a dupplicate ID is attempted to be
 inserted into the table. If the keys were objects, those two users would 
 be different objects with the same ID, and would be inserted into the table.
 */
+
+//Need to turn a lot of this stuff into generics with the supress unchecked stuff.
 
 package uk.ac.warwick.java.cs126.services;
 import uk.ac.warwick.java.cs126.models.User;
@@ -53,16 +55,16 @@ class UserAndPoint {
 
 public class UserStore implements IUserStore {
 	//Implement UserStore as a hashtable based on User.id.
-	//Hash map will have a capacity of 1000000.
-	//Hash function is simply X mod 1000000.
-	//This means that users are sorted into bins based on the last 6 digits of
+	//Hash map will have a capacity of 100000.
+	//Hash function is simply X mod 100000.
+	//This means that users are sorted into bins based on the last 5 digits of
 	//their user id.
 	private int capacity;
 	private UserAndPoint[] hashtable;
 	private int userCount;
 	
 	public UserStore() {
-		capacity = 1000000;
+		capacity = 100000;
 		hashtable = new UserAndPoint[capacity];
 		userCount = 0;
 		//Array is initialized at null.

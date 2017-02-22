@@ -12,125 +12,125 @@ import uk.ac.warwick.java.cs126.services.WeetStore;
 import uk.ac.warwick.java.cs126.models.Weet;
 
 public class WeetTests {
-    private Random random;
-		//Used to generate random numbers.
-		private WeetStore weets;
-		private User[] users;//Simply array of a few users to test making some posts.
-		private String[] setTrends;
-		
-		public WeetTests() {
-			weets = new WeetStore();
-			random = new Random();
-			users = new User[5];
-			setTrends = new String[] {
-				"#wednesday", "#dude", "#DCS", "#hydrate",
-				"#morning", "#TESCO", "#Switch", "#Nintendo",
-				"#Witter", "#2hu", "#Warwick", "#Coventry"
-			};
-			int i = 0;
-			for (i = 0; i < 5; i++) {
-				users[i] = new User("Spammer", i, new Date((long) random.nextInt()));
-			}
+	private Random random;
+	//Used to generate random numbers.
+	private WeetStore weets;
+	private User[] users;//Simply array of a few users to test making some posts.
+	private String[] setTrends;
+	
+	public WeetTests() {
+		weets = new WeetStore();
+		random = new Random();
+		users = new User[5];
+		setTrends = new String[] {
+			"#wednesday", "#dude", "#DCS", "#hydrate",
+			"#morning", "#TESCO", "#Switch", "#Nintendo",
+			"#Witter", "#2hu", "#Warwick", "#Coventry"
+		};
+		int i = 0;
+		for (i = 0; i < 5; i++) {
+			users[i] = new User("Spammer", i, new Date((long) random.nextInt()));
 		}
-		public int testAddWeet() 
-		{
-			//Add a single weet with random id numbers.
-			//Returns the ID number used if successful, else return -1.
-			int randInt = random.nextInt(1000000); //Pick a random ID number for the weet
-			String strTrend = "";
-			for (int i = 0; i < random.nextInt(5); i++) {
-				strTrend += setTrends[random.nextInt(12)] + " ";
-			}
-			Weet temp = new Weet(randInt, users[random.nextInt(5)].getId(), strTrend 
-				+ "A weet " + randInt, new Date((long) random.nextInt()));
-			System.out.println(weetToString(temp));
-			return ((weets.addWeet(temp)) ? randInt : -1);
+	}
+	public int testAddWeet() 
+	{
+		//Add a single weet with random id numbers.
+		//Returns the ID number used if successful, else return -1.
+		int randInt = random.nextInt(1000000); //Pick a random ID number for the weet
+		String strTrend = "";
+		for (int i = 0; i < random.nextInt(5); i++) {
+			strTrend += setTrends[random.nextInt(12)] + " ";
 		}
-		
-		public boolean testAddWithID(int wid) {
-			Weet temp = new Weet(wid, users[random.nextInt(5)].getId(), "Conflicting Tweet " + wid, new Date((long) random.nextInt()));
-			return weets.addWeet(temp);
+		Weet temp = new Weet(randInt, users[random.nextInt(5)].getId(), strTrend 
+			+ "A weet " + randInt, new Date((long) random.nextInt()));
+		System.out.println(weetToString(temp));
+		return ((weets.addWeet(temp)) ? randInt : -1);
+	}
+	
+	public boolean testAddWithID(int wid) {
+		Weet temp = new Weet(wid, users[random.nextInt(5)].getId(), "Conflicting Tweet " + wid, new Date((long) random.nextInt()));
+		return weets.addWeet(temp);
+	}
+	
+	public Weet testGetWeet(int wid) {
+		//Return null if user not found.
+		return weets.getWeet(wid);
+	}
+	
+	public Weet[] testGetWeets() {
+		return weets.getWeets();
+	}
+	
+	public Weet[] testGetWeetsByUser(User u) {
+		return weets.getWeetsByUser(u);
+	}
+	
+	public Weet[] testGetWeetsContaining(String q) {
+		return weets.getWeetsContaining(q);
+	}
+	
+	public Weet[] testGetWeetsOn(Date d) {
+		return weets.getWeetsOn(d);
+	}
+	
+	public Weet[] testGetWeetsBefore(Date d) {
+		return weets.getWeetsBefore(d);
+	}
+	
+	public String[] testGetTrending() {
+		return weets.getTrending();
+	}
+	
+	public String[] getTrends() {
+		return setTrends;
+	}
+	
+	public User[] getWorkingUsers() {
+		return users;
+	}
+	
+	public String arrUserToString(User[] arr) {
+		if (arr == null) return "NO ARRAY";
+		String retString = "[\n";
+		for (int i = 0; i < arr.length; i++) {
+			retString += userToString(arr[i]) + "\n";
 		}
-		
-		public Weet testGetWeet(int wid) {
-			//Return null if user not found.
-			return weets.getWeet(wid);
+		retString += "]";
+		return retString;
+	}
+	
+	public String arrUserToString() {
+		//Deal with the working user array instead.
+		if (users == null) return "NO ARRAY";
+		String retString = "[\n";
+		for (int i = 0; i < users.length; i++) {
+			retString += userToString(users[i]) + "\n";
 		}
-		
-		public Weet[] testGetWeets() {
-			return weets.getWeets();
+		retString += "]";
+		return retString;
+	}
+	
+	public String arrWeetToString(Weet[] arr) {
+		if (arr == null) return "NO ARRAY";
+		String retString = "[\n";
+		for (int i = 0; i < arr.length; i++) {
+			retString += weetToString(arr[i]) + "\n";
 		}
+		retString += "]";
+		return retString;			
+	}
+	
+	public String userToString(User u) {
+		if (u == null) return "NO USER";
+		return "(" + u.getName() + " " + u.getId() + " " + u.getPrettyDateJoined() + ")";
+	}
+	
+	public String weetToString(Weet w) {
+		if (w == null) return "NO WEET";
+		return "(" + w.getId() + " - " + w.getUserId() + " - " + w.getMessage() + " - " + w.getPrettyDateWeeted() + ")";
+	}
 		
-		public Weet[] testGetWeetsByUser(User u) {
-			return weets.getWeetsByUser(u);
-		}
-		
-		public Weet[] testGetWeetsContaining(String q) {
-			return weets.getWeetsContaining(q);
-		}
-		
-		public Weet[] testGetWeetsOn(Date d) {
-			return weets.getWeetsOn(d);
-		}
-		
-		public Weet[] testGetWeetsBefore(Date d) {
-			return weets.getWeetsBefore(d);
-		}
-		
-		public String[] testGetTrending() {
-			return weets.getTrending();
-		}
-		
-		public String[] getTrends() {
-			return setTrends;
-		}
-		
-		public User[] getWorkingUsers() {
-			return users;
-		}
-		
-		public String arrUserToString(User[] arr) {
-			if (arr == null) return "NO ARRAY";
-			String retString = "[\n";
-			for (int i = 0; i < arr.length; i++) {
-				retString += userToString(arr[i]) + "\n";
-			}
-			retString += "]";
-			return retString;
-		}
-		
-		public String arrUserToString() {
-			//Deal with the working user array instead.
-			if (users == null) return "NO ARRAY";
-			String retString = "[\n";
-			for (int i = 0; i < users.length; i++) {
-				retString += userToString(users[i]) + "\n";
-			}
-			retString += "]";
-			return retString;
-		}
-		
-		public String arrWeetToString(Weet[] arr) {
-			if (arr == null) return "NO ARRAY";
-			String retString = "[\n";
-			for (int i = 0; i < arr.length; i++) {
-				retString += weetToString(arr[i]) + "\n";
-			}
-			retString += "]";
-			return retString;			
-		}
-		
-		public String userToString(User u) {
-			if (u == null) return "NO USER";
-			return "(" + u.getName() + " " + u.getId() + " " + u.getPrettyDateJoined() + ")";
-		}
-		
-		public String weetToString(Weet w) {
-			if (w == null) return "NO WEET";
-			return "(" + w.getId() + " - " + w.getUserId() + " - " + w.getMessage() + " - " + w.getPrettyDateWeeted() + ")";
-		}
-		
-		public static void main(String[] args) {
+	public static void main(String[] args) {
 		WeetTests test = new WeetTests();
 		System.out.println("Start WeetTests");
 		//Initialise Stuff
