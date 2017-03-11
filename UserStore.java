@@ -59,6 +59,14 @@ class UserDBS extends DateBinarySearch<User> {
 	}
 }
 
+class SortByDJ extends MergeSort {
+	int compFunc(Object a, Object b) {
+		User first = (User) a;
+		User second = (User) b;
+		return first.getDateJoined().compareTo(second.getDateJoined());
+	}
+}
+
 public class UserStore implements IUserStore {
 	//Implement UserStore as a hashtable based on User.id.
 	//Hash map will have a capacity of 100000.
@@ -69,12 +77,14 @@ public class UserStore implements IUserStore {
 	private UserAndPoint[] hashtable;
 	private int userCount;
 	private UserDBS searcher; 
+	private SortByDJ sorter;
 	
 	public UserStore() {
 		capacity = 100000;
 		hashtable = new UserAndPoint[capacity];
 		userCount = 0;
 		searcher = new UserDBS();
+		sorter = new SortByDJ();
 		//Array is initialized at null.
 	}
 
@@ -129,7 +139,8 @@ public class UserStore implements IUserStore {
 		User[] retArray = new User[userCount];
 		UserAndPoint temp;
 		int j = 0; //Used for end pointer in retArray
-		for (int i = 0; i < capacity; i++) {
+		int i = 0;
+		for (i = 0; i < capacity; i++) {
 			if (hashtable[i] != null) {
 				temp = hashtable[i];
 				while (temp != null) {
@@ -140,7 +151,15 @@ public class UserStore implements IUserStore {
 			}
 		}
 		//Sort by date joined and return the array.
-		return sortByDJ(retArray);
+		//return sortByDJ(retArray);
+		//Stuff to work around Java Generic Arrays.
+		Object[] result = new Object[retArray.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) retArray[i];
+		result = sorter.sort(result);
+		for (i = 0; i < result.length; i++)
+			retArray[i] = (User) result[i];
+		return retArray;
 	}
 
 	public User[] getUsersContaining(String query) {
@@ -188,6 +207,7 @@ public class UserStore implements IUserStore {
 		//Keep looking through the array until we find the date joined which is
 		//equal to or later than the date provided.
 		count = searcher.search(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
+		System.out.println(count);
 		if (count == null) return null;
 		count += 1;
 		User[] retArray = new User[arrAllUsers.length - count];
@@ -201,7 +221,7 @@ public class UserStore implements IUserStore {
 	private int hashFunction(int uid) {
 		return uid % this.capacity;
 	}
-	
+	/*
 	private User[] sortByDJ(User[] arrIn) {
 		//Merge sort is implemented here with fixed length arrays.
 		//Used arrays because I really like using arrays from working with
@@ -269,5 +289,5 @@ public class UserStore implements IUserStore {
 		//System.out.println("End Merge");
 		return retArray;
 		//Done with the merging, let's bring it back up.
-	}
+	}*/
 }

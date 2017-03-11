@@ -1,13 +1,16 @@
-public abstract class MergeSort<E> {
+package uk.ac.warwick.java.cs126.services;
+
+public abstract class MergeSort {
+//Sort Object Arrays because generics are awful.
 	
-	abstract int compFunc(E a, E b);
+	abstract int compFunc(Object a, Object b);
 	
-	public E[] sort(E[] arrIn) {
+	public Object[] sort(Object[] arrIn) {
 		return sort(arrIn, arrIn.length);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public E[] sort(E[] arrIn, int len) {
+	public Object[] sort(Object[] arrIn, int len) {
 		//Merge sort is implemented here with fixed length arrays.
 		//Used arrays because I really like using arrays from working with
 		//Pascal/Delphi. Making a linked list implemented merge sort would've
@@ -21,12 +24,12 @@ public abstract class MergeSort<E> {
 		//Space Complexity O(n)
 		int length = len;	//Find array length for reference.
 		if (length == 1) {
-			E[] retArray = (E[]) new Object[1];
-			retArray[0] = arrIn[1];
+			Object[] retArray = new Object[1];
+			retArray[0] = arrIn[0];
 			return retArray;	//No need to split
 		}
-		E[] arrLeft = (E[]) new Object[length/2];
-		E[] arrRight = (E[]) new Object[length - length/2];
+		Object[] arrLeft = new Object[length/2];
+		Object[] arrRight = new Object[length - length/2];
 		//Get the left and right side of the array, on odd numbers,
 		//arrLeft.length + 1 == arrRight.length.
 		int i = 0;
@@ -40,15 +43,15 @@ public abstract class MergeSort<E> {
 		//Recursion here
 		//System.out.println("End Recursion");
 		//Time to do some merging.
-		E[] retArray = (E[]) new Object[length];
+		Object[] retArray = new Object[length];
 		i = 0; //Loop counter for left array.
 		int j = 0; //Loop counter for right array.
 		int k = 0; //Loop counter for return array.
 		//System.out.println("Array Lengths: L=" + arrLeft.length + " R=" + arrRight.length);
 		while (i < arrLeft.length && j < arrRight.length) {
 			//System.out.println("Nums: i=" + i + " j=" + j + " k=" + k);
-			//System.out.println("Compare=" + arrLeft[i].getDateJoined().compareTo(arrRight[j].getDateJoined()));
-			if(compFunc(arrLeft[i], arrRight[i]) > 0) {
+			//System.out.println("Compare=" + compFunc(arrLeft[i], arrRight[j]));
+			if(compFunc(arrLeft[i], arrRight[j]) > 0) {
 				retArray[k] = arrLeft[i];
 				//System.out.println("AddL");
 				i++;
