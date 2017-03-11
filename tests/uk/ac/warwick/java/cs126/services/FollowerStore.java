@@ -77,35 +77,12 @@ class FollowRelation implements Comparable<FollowRelation> {
 }
 
 class FollowAndPoint extends ItemAndPoint<FollowRelation> {
+	//Used in FollowLinkList where the list is simply comprised of follows.
+	//The FollowRelation is used as the check.	
 	public FollowAndPoint(FollowRelation fr) {
 		super(fr);
 	}
 }
-/*
-class FollowAndPoint {
-	//Used in FollowLinkList where the list is simply comprised of follows.
-	//The FollowRelation is used as the check.
-	private FollowRelation current;
-	private FollowAndPoint next;
-	
-	public FollowAndPoint(FollowRelation fr) {
-		current = fr;
-		next = null;
-	}
-	
-	public void gottaPointFast(FollowAndPoint youreTooSlow) {
-		next = youreTooSlow;
-	}
-	
-	public FollowRelation getCurrent() {
-		return current;
-	}
-	
-	public FollowAndPoint getNext() {
-		return next;
-	}
-}*/
-
 class FollowCounter implements Comparable<FollowCounter> {
 	//Stores user ID and count of followers, for use getFollows and getTopUsers
 	private int uid;
@@ -146,28 +123,6 @@ class FCAndPoint extends ItemAndPoint<FollowCounter> {
 		super(fc);
 	}
 }
-/*
-class FCAndPoint {
-	private FollowCounter current;
-	private FCAndPoint next;
-	
-	public FCAndPoint(FollowCounter fc) {
-		current = fc;
-		next = null;
-	}
-	
-	public void gottaPointFast(FCAndPoint youreTooSlow) {
-		next = youreTooSlow;
-	}
-	
-	public FollowCounter getCurrent() {
-		return current;
-	}
-	
-	public FCAndPoint getNext() {
-		return next;
-	}
-}*/
 
 class SortByLead extends MergeSort {
 	int compFunc(Object a, Object b) {

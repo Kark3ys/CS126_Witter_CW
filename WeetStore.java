@@ -41,31 +41,9 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-/*
-class WeetAndPoint {
-	//Wrapper item for the singly linked list implementation of WeetStore
-	private Weet current;
-	private WeetAndPoint next;
-	
-	public WeetAndPoint(Weet wt) {
-		current = wt;
-		next = null;
-	}
-	
-	public void gottaPointFast(WeetAndPoint youreTooSlow) {
-		next = youreTooSlow;
-	}
-	
-	public Weet getCurrent() {
-		return current;
-	}
-	
-	public WeetAndPoint getNext() {
-		return next;
-	}
-}
-*/
+
 class WeetAndPoint extends ItemAndPoint<Weet> {
+	//Wrapper item for the singly linked list implementation of WeetStore
 	public WeetAndPoint(Weet w) {
 		super(w);
 	}
@@ -89,157 +67,18 @@ class WeetBucket extends GenericBucket<Weet> {
 		return retArray;
 	}
 }
-/*
-class WeetBucket {
-	//WeetAndPoint Single Linked Lists sorted by Date.
-	private WeetAndPoint head;
-	private int count;
-
-	public WeetBucket() {
-		head = null;
-		count = 0;
-	}
-	
-	public boolean insertAndSort(Weet wt) {
-		//Quickly insert the item via an insertion sort with one run through
-		//Time Complexity: O(n)
-		//Means that all weets are sorted by date making it a lot quicker to output
-		//The weets when requested.
-		boolean inserted = false;
-		count++;
-		WeetAndPoint temp = new WeetAndPoint(wt);
-		if (head == null) {
-			head = temp;
-			return true;
-		}
-		Date dateTemp = wt.getDateWeeted();
-		WeetAndPoint prev = null;
-		WeetAndPoint ptr = head;
-		while (!inserted && ptr != null) {
-			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) > 0) {
-				//Insert at current position and shif the current ptr down a place
-				inserted = true;
-			} else {
-				prev = ptr;
-				ptr = ptr.getNext();
-			}
-		}
-		
-		temp.gottaPointFast(ptr);
-		if (prev == null) {
-			//If prev is null, that means the new item is the new head of the list.
-			head = temp;
-		} else {
-			//If prev is set, then the new item needs to go between prev and ptr
-			prev.gottaPointFast(temp);
-		}
-		
-		return true;
-	}	
-	
-	public boolean clear() {
-		head = null;
-		count = 0;
-		return true;
-	}
-	
-	public Weet[] getWeets() {
-		if (count == 0) return null;
-		Weet[] retArray = new Weet[count];
-		int i = 0;
-		WeetAndPoint ptr = head;
-		while (ptr != null) {
-			retArray[i] = ptr.getCurrent();
-			i++;
-			ptr = ptr.getNext();
-		}
-		
-		return retArray;
-	}
-	
-	public int getCount() {
-		return count;
-	}
-}
-*/
 
 class BucketPointUID extends BucketAndPoint<WeetBucket, Integer> {
 	public BucketPointUID(Integer ch, WeetBucket wb) {
 		super(ch, wb);
 	}
 }
-/*
-class BucketPointUID {
-	//Bucket pointer where check is either date or uid.
-	private int check;
-	private WeetBucket current;
-	private BucketPointUID next;
-	
-	public BucketPointUID(int ch, WeetBucket wb) {
-		check = ch;
-		current = wb;
-		next = null;
-	}
-	
-	public void gottaPointFast(BucketPointUID youreTooSlow) {
-		//Sonic Speed: O(1)
-		next = youreTooSlow;
-	}
-	
-	public WeetBucket getCurrent() {
-		return current;
-	}
-	
-	public BucketPointUID getNext() {
-		return next;
-	}
-	
-	public int getCheck() {
-		return check;
-	}
-}*/
 
 class BucketPointDate extends BucketAndPoint<WeetBucket, Date> {
 	public BucketPointDate(Date ch, WeetBucket wb) {
 		super(ch, wb);
 	}
 }
-/*
-class BucketPointDate {
-	//Bucket pointer where check is either date or uid.
-	private Date check;
-	private WeetBucket current;
-	private BucketPointDate next;
-	
-	public BucketPointDate(Date ch, WeetBucket wb) {
-		check = ch;
-		current = wb;
-		next = null;
-	}
-	
-	public BucketPointDate(BucketPointDate bpd) {
-		check = bpd.getCheck();
-		current = bpd.getCurrent();
-		next = null;
-	}
-	
-	public void gottaPointFast(BucketPointDate youreTooSlow) {
-		//Sonic Speed: O(1)
-		next = youreTooSlow;
-	}
-	
-	public WeetBucket getCurrent() {
-		return current;
-	}
-	
-	public BucketPointDate getNext() {
-		return next;
-	}
-	
-	public Date getCheck() {
-		return check;
-	}
-}*/
 
 class Trend {
 	private String trend;
@@ -273,29 +112,6 @@ class TrendAndPoint extends ItemAndPoint<Trend> {
 		return retVal;
 	}
 }
-		
-/*
-class TrendAndPoint {
-	private Trend trend;
-	private TrendAndPoint next;
-	
-	public TrendAndPoint(String tag) {
-		trend = new Trend(tag);
-		next = null;
-	}
-	
-	public void gottaPointFast(TrendAndPoint youreTooSlow) {
-		next = youreTooSlow;
-	}
-	
-	public Trend getTrend() {
-		return trend;
-	}
-	
-	public TrendAndPoint getNext() {
-		return next;
-	}
-}*/
 
 class DBPDBS extends DateBinarySearch<BucketPointDate> {
 	int compFunc(BucketPointDate item, Date target) {

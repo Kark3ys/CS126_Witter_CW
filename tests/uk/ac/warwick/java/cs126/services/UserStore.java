@@ -20,41 +20,14 @@ package uk.ac.warwick.java.cs126.services;
 import uk.ac.warwick.java.cs126.models.User;
 import java.util.Date;
 import java.lang.Math;
-/*
-class UserAndPoint {
+
+class UserAndPoint extends ItemAndPoint<User> {
 	//Used to keep track of the users in a hashtable.
 	//Only if there is a collision, but better safe than sorry.
 	//Seeing as I'm using the user ids for the keys in the hash table, it makes
 	//sense to make the comparison between the ids, keeps things easy.
 	//Especially when having to add/get users as it's assumed that ids are
 	//unique.
-	private User current;
-	private UserAndPoint next;
-	
-	public UserAndPoint(User usr) {
-		//When we are provided a new user, we need to point to the provided user, 
-		//then set the next pointer to null.
-		current = usr;
-		next = null;		
-	}
-	
-	public void gottaPointFast(UserAndPoint youreTooSlow) {
-		//Set this current UserAndPoint to point at the provided User, only used
-		//in case of collisions.
-		next = youreTooSlow;
-	}
-	
-	public User getCurrent() {
-		return this.current;
-	}
-	
-	public UserAndPoint getNext() {
-		return this.next;
-	}
-}
-*/
-
-class UserAndPoint extends ItemAndPoint<User> {
 	public UserAndPoint(User item) {
 		super(item);
 	}
