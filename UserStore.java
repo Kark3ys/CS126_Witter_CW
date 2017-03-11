@@ -20,7 +20,7 @@ package uk.ac.warwick.java.cs126.services;
 import uk.ac.warwick.java.cs126.models.User;
 import java.util.Date;
 import java.lang.Math;
-
+/*
 class UserAndPoint {
 	//Used to keep track of the users in a hashtable.
 	//Only if there is a collision, but better safe than sorry.
@@ -50,6 +50,13 @@ class UserAndPoint {
 	
 	public UserAndPoint getNext() {
 		return this.next;
+	}
+}
+*/
+
+class UserAndPoint extends ItemAndPoint<User> {
+	public UserAndPoint(User item) {
+		super(item);
 	}
 }
 
@@ -100,7 +107,7 @@ public class UserStore implements IUserStore {
 		//Set up some pointers.
 		while (temp != null) {
 			prev = temp;
-			temp = temp.getNext();
+			temp = (UserAndPoint) temp.getNext();
 		}
 		//If the first try wasn't null, keep cycling until it is.
 		if (prev == null) {
@@ -125,7 +132,7 @@ public class UserStore implements IUserStore {
 		UserAndPoint check = hashtable[hashFunction(uid)];
 		while (check != null) {
 			if (check.getCurrent().getId() == uid) return check.getCurrent();
-			check = check.getNext();
+			check = (UserAndPoint) check.getNext();
 		}
 		return null;
 	}
@@ -146,7 +153,7 @@ public class UserStore implements IUserStore {
 				while (temp != null) {
 					retArray[j] = temp.getCurrent();
 					j++;
-					temp = temp.getNext();
+					temp = (UserAndPoint) temp.getNext();
 				}
 			}
 		}
