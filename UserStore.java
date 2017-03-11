@@ -53,6 +53,12 @@ class UserAndPoint {
 	}
 }
 
+class UserDBS extends DateBinarySearch<User> {
+	int compFunc(User item, Date target) {
+		return item.getDateJoined().compareTo(target);
+	}
+}
+
 public class UserStore implements IUserStore {
 	//Implement UserStore as a hashtable based on User.id.
 	//Hash map will have a capacity of 100000.
@@ -62,11 +68,13 @@ public class UserStore implements IUserStore {
 	private int capacity;
 	private UserAndPoint[] hashtable;
 	private int userCount;
+	private UserDBS searcher; 
 	
 	public UserStore() {
 		capacity = 100000;
 		hashtable = new UserAndPoint[capacity];
 		userCount = 0;
+		searcher = new UserDBS();
 		//Array is initialized at null.
 	}
 
@@ -179,7 +187,8 @@ public class UserStore implements IUserStore {
 		//while (arrAllUsers[count].getDateJoined().compareTo(dateBefore) < 0) count++;
 		//Keep looking through the array until we find the date joined which is
 		//equal to or later than the date provided.
-		count = binSearchDate(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
+		//count = binSearchDate(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
+		count = searcher.search(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
 		if (count == null) return null;
 		count += 1;
 		User[] retArray = new User[arrAllUsers.length - count];
@@ -193,7 +202,7 @@ public class UserStore implements IUserStore {
 	private int hashFunction(int uid) {
 		return uid % this.capacity;
 	}
-	
+	/*
 	private Integer binSearchDate(User[] users, Date target, int left, int right) {
 		//Binary search through an array of users sorted by date.
 		//Returns the index of the date before and after target.
@@ -207,7 +216,7 @@ public class UserStore implements IUserStore {
 		else if (comp < 0) return binSearchDate(users, target, left, mid-1);
 		else if (comp == 0) return mid;
 		return null; //Return null if we get here, something has gone wrong.
-	}
+	}*/
 	
 	private User[] sortByDJ(User[] arrIn) {
 		//Merge sort is implemented here with fixed length arrays.
