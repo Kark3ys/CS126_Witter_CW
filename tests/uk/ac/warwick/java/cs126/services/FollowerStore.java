@@ -76,6 +76,12 @@ class FollowRelation implements Comparable<FollowRelation> {
 	}
 }
 
+class FollowAndPoint extends ItemAndPoint<FollowRelation> {
+	public FollowAndPoint(FollowRelation fr) {
+		super(fr);
+	}
+}
+/*
 class FollowAndPoint {
 	//Used in FollowLinkList where the list is simply comprised of follows.
 	//The FollowRelation is used as the check.
@@ -98,7 +104,7 @@ class FollowAndPoint {
 	public FollowAndPoint getNext() {
 		return next;
 	}
-}
+}*/
 
 class FollowCounter implements Comparable<FollowCounter> {
 	//Stores user ID and count of followers, for use getFollows and getTopUsers
@@ -135,6 +141,12 @@ class FollowCounter implements Comparable<FollowCounter> {
 	}
 }
 
+class FCAndPoint extends ItemAndPoint<FollowCounter> {
+	public FCAndPoint(FollowCounter fc) {
+		super(fc);
+	}
+}
+/*
 class FCAndPoint {
 	private FollowCounter current;
 	private FCAndPoint next;
@@ -155,7 +167,7 @@ class FCAndPoint {
 	public FCAndPoint getNext() {
 		return next;
 	}
-}
+}*/
 
 class SortByLead extends MergeSort {
 	int compFunc(Object a, Object b) {
@@ -230,7 +242,7 @@ public class FollowerStore implements IFollowerStore {
 		
 		while (temp != null) {
 			prev = temp;
-			temp = temp.getNext();
+			temp = (FollowAndPoint) temp.getNext();
 		}
 		
 		if (prev == null) {
@@ -252,7 +264,7 @@ public class FollowerStore implements IFollowerStore {
 		while (!match && temp != null) {
 			match = temp.getCurrent().equals(uidL);
 			prev = temp;
-			temp = temp.getNext();
+			temp = (FCAndPoint) temp.getNext();
 		}
 		
 		if (prev == null) {
@@ -294,7 +306,7 @@ public class FollowerStore implements IFollowerStore {
 					if (temp.getCurrent().getL() == uidL) {
 						arrFR[count] = temp.getCurrent();
 						count++;
-						temp = temp.getNext();
+						temp = (FollowAndPoint) temp.getNext();
 					}
 				}
 			}
@@ -343,7 +355,7 @@ public class FollowerStore implements IFollowerStore {
 					if (temp.getCurrent().getF() == uidF) {
 						arrFR[count] = temp.getCurrent();
 						count++;
-						temp = temp.getNext();
+						temp = (FollowAndPoint) temp.getNext();
 					}
 				}
 			}
@@ -376,7 +388,7 @@ public class FollowerStore implements IFollowerStore {
 		while (!match && temp != null) {
 			match  = temp.getCurrent().equals(uidL, uidF);
 			prev = temp;
-			temp = temp.getNext();
+			temp = (FollowAndPoint) temp.getNext();
 		}
 		return match;
 	}
@@ -390,7 +402,7 @@ public class FollowerStore implements IFollowerStore {
 		while (!match && temp != null) {
 			match = temp.getCurrent().equals(uidL);
 			prev = temp;
-			temp = temp.getNext();
+			temp = (FCAndPoint) temp.getNext();
 		}
 		if (!match) return 0;
 		return prev.getCurrent().getCount();
@@ -520,7 +532,7 @@ public class FollowerStore implements IFollowerStore {
 			while (temp != null) {
 				arrFC[j] = temp.getCurrent();
 				j++;
-				temp = temp.getNext();
+				temp = (FCAndPoint) temp.getNext();
 			}
 		}
 		
