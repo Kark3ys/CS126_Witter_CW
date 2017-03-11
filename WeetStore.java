@@ -91,7 +91,7 @@ class WeetBucket {
 		WeetAndPoint prev = null;
 		WeetAndPoint ptr = head;
 		while (!inserted && ptr != null) {
-			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) < 1) {
+			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) > 0) {
 				//Insert at current position and shif the current ptr down a place
 				inserted = true;
 			} else {
@@ -253,6 +253,22 @@ class DBPDBS extends DateBinarySearch<BucketPointDate> {
 	}
 }
 
+class SortByDate extends MergeSort {
+	int compFunc(Object a, Object b) {
+		BucketPointDate first = (BucketPointDate) a;
+		BucketPointDate second = (BucketPointDate) b;
+		return first.getCheck().compareTo(second.getCheck());
+	}
+}
+
+class SortTrends extends MergeSort {
+	int compFunc(Object a, Object b) {
+		Trend first = (Trend) a;
+		Trend second = (Trend) b;
+		return first.getCount() - second.getCount();
+	}
+}
+
 public class WeetStore implements IWeetStore {
 	private int idHashSize;
 	private int uidHashSize;
@@ -266,6 +282,8 @@ public class WeetStore implements IWeetStore {
 	//Hashtable storing buckets of weets based on date.
 	private TrendAndPoint[] trendTable;
 	private DBPDBS searcher;
+	private SortByDate sorterDate;
+	private SortTrends sorterTrend;
 	private int weetCount;
 	private int dateCount; //Number of Date Buckets
 	private int uniqueWeetedUsers; //Number of UID Buckets.
@@ -281,6 +299,8 @@ public class WeetStore implements IWeetStore {
 		dateHashtable = new BucketPointDate[dateHashSize];
 		trendTable = new TrendAndPoint[trendHashSize];
 		searcher = new DBPDBS();
+		sorterDate = new SortByDate();
+		sorterTrend = new SortTrends();
 		weetCount = 0;		
 		dateCount = 0;
 		uniqueWeetedUsers = 0;
@@ -499,7 +519,13 @@ public class WeetStore implements IWeetStore {
 				}
 			}
 		}
-		dateBuckets = sortByDate(dateBuckets);
+		
+		Object[] result = new Object[dateBuckets.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) dateBuckets[i];
+		result = sorterDate.sort(result);
+		for (i = 0; i < result.length; i++)
+			dateBuckets[i] = (BucketPointDate) result[i];
 
 		return dateBuckets;
 	}
@@ -627,8 +653,13 @@ public class WeetStore implements IWeetStore {
 				temp = temp.getNext();
 			}
 		}
+		Object[] result = new Object[trends.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) trends[i];
+		result = sorterTrend.sort(result);
+		for (i = 0; i < result.length; i++)
+			trends[i] = (Trend) result[i];
 		
-		trends = sortTrends(trends);
 		String[] retArray = new String[10];
 		for (i = 0; i < retArray.length && i < trends.length; i++)
 			retArray[i] = trends[i].getTrend();
@@ -666,7 +697,7 @@ public class WeetStore implements IWeetStore {
 		//Convert a date object into a date for the start of a particular day.
 		return new Date(date.getTime() / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1));
 	}
-	
+	/*
 	private BucketPointDate[] sortByDate(BucketPointDate[] arrIn) {
 		//I really need to stop copying and pasting this merge sort and make a more generalised version.
 		
@@ -816,5 +847,5 @@ public class WeetStore implements IWeetStore {
 		//System.out.println("End Merge");
 		return retArray;
 		//Done with the merging, let's bring it back up.
-	}
+	}*/
 }
