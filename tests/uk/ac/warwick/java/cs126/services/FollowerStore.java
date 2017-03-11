@@ -24,7 +24,7 @@ adjacency hash matrix (n >> c^2 where c is frCap defined below) tends to O(n)
 
 Oh yeah, and tracking the number of followers someone has will be in another 
 hashtable for user ids (sounds very familiar, but I'll keep it separate for now).
-Literal carbon copy of how I handled trends, but vanity comes above space efficiency.
+Literal carbon copy of how I handled trends, but simlpicity comes above space efficiency.
 */
 
 package uk.ac.warwick.java.cs126.services;
@@ -157,6 +157,38 @@ class FCAndPoint {
 	}
 }
 
+class SortByLead extends MergeSort {
+	int compFunc(Object a, Object b) {
+		FollowRelation first = (FollowRelation) a;
+		FollowRelation second = (FollowRelation) b;
+		return second.getL() - first.getL();
+	}
+}
+
+class SortByFollow extends MergeSort {
+	int compFunc(Object a, Object b) {
+		FollowRelation first = (FollowRelation) a;
+		FollowRelation second = (FollowRelation) b;
+		return second.getF() - first.getF();
+	}
+}
+
+class SortFRByDate extends MergeSort {
+	int compFunc(Object a, Object b) {
+		FollowRelation first = (FollowRelation) a;
+		FollowRelation second = (FollowRelation) b;
+		return first.getDate().compareTo(second.getDate());
+	}
+}
+
+class SortByFCount extends MergeSort {
+	int compFunc(Object a, Object b) {
+		FollowCounter first = (FollowCounter) a;
+		FollowCounter second = (FollowCounter) b;
+		return first.getCount() - second.getCount();
+	}
+}
+
 public class FollowerStore implements IFollowerStore {
 	
 	private int frCap;
@@ -165,16 +197,23 @@ public class FollowerStore implements IFollowerStore {
 	private int fcCap;
 	private FCAndPoint[] fcHashtable;
 	private int FCObjCount;
+	private SortByLead sorterL;
+	private SortByFollow sorterF;
+	private SortFRByDate sorterD;
+	private SortByFCount sorterFC;
 
 	public FollowerStore() {
 		frCap = fcCap = 10000;
 		frHashtable = new FollowAndPoint[frCap][frCap];
 		fcHashtable = new FCAndPoint[fcCap];
 		followCount = FCObjCount = 0;
+		sorterL = new SortByLead();
+		sorterF = new SortByFollow();
+		sorterD = new SortFRByDate();
+		sorterFC = new SortByFCount();
 	}
 
 	public boolean addFollower(int uid1, int uid2, Date followDate) {
-		// TODO 
 		int uidL = uid2;
 		int uidF = uid1;
 		//Get rid of the god awful parameter names.
@@ -263,7 +302,14 @@ public class FollowerStore implements IFollowerStore {
 		if (count == 0) return null;
 		//At this stage, we'll have an array of FollowRelation up to count,
 		//past count will just be null values.
-		return sortByDate(arrFR, count);
+		Object[] arrObj = new Object[arrFR.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) arrFR[i];
+		arrObj = sorterD.sort(arrObj, count);
+		FollowRelation[] retArray = new FollowRelation[count];
+		for (i = 0; i < retArray.length; i++)
+			retArray[i] = (FollowRelation) arrObj[i];
+		return retArray;
 		//Slight difference to the usual merge sort where we will also pass the length
 		//we wish to merge sort over. The normal merge sort would simply call this but
 		//with the arrIn.length passed into the second parameter.
@@ -305,7 +351,14 @@ public class FollowerStore implements IFollowerStore {
 		if (count == 0) return null;
 		//At this stage, we'll have an array of FollowRelation up to count,
 		//past count will just be null values.
-		return sortByDate(arrFR, count);
+		Object[] arrObj = new Object[arrFR.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) arrFR[i];
+		arrObj = sorterD.sort(arrObj, count);
+		FollowRelation[] retArray = new FollowRelation[count];
+		for (i = 0; i < retArray.length; i++)
+			retArray[i] = (FollowRelation) arrObj[i];
+		return retArray;
 		//Slight difference to the usual merge sort where we will also pass the length
 		//we wish to merge sort over. The normal merge sort would simply call this but
 		//with the arrIn.length passed into the second parameter.
@@ -344,15 +397,29 @@ public class FollowerStore implements IFollowerStore {
 	}
 
 	public int[] getMutualFollowers(int uid1, int uid2) {
+		int i = 0;
 		if (this.followCount == 0) return null;
 		FollowRelation[] set1 = getFollowersFR(uid1);
 		if (set1 == null) return null;
 		FollowRelation[] set2 = getFollowersFR(uid2);
 		if (set2 == null) return null;
-		set1 = sortByFollow(set1);
-		set2 = sortByFollow(set2);
+		
+		Object[] arrObj = new Object[set1.length];
+		for (i = 0; i < arrObj.length; i++) 
+			arrObj[i] = (Object) set1[i];
+		arrObj = sorterF.sort(arrObj);
+		for (i = 0; i < arrObj.length; i++)
+			set1[i] = (FollowRelation) arrObj[i];
+		
+		arrObj = new Object[set2.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) set2[i];
+		arrObj = sorterF.sort(arrObj);
+		for (i = 0; i < arrObj.length; i++)
+			set2[i] = (FollowRelation) arrObj[i];		
+		
 		FollowRelation[] tempSet = new FollowRelation[((set1.length > set2.length) ? set1.length : set2.length)];
-		int i = 0;
+		i = 0;
 		int j = 0;
 		int k = 0;
 		int comp = 0;
@@ -363,7 +430,7 @@ public class FollowerStore implements IFollowerStore {
 			if (comp < 0) i++;
 			else if (comp > 0) j++;
 			else {
-				tempSet[k] = set1[i];
+				tempSet[k] = (set1[i].getDate().compareTo(set2[j].getDate()) > 0) ? set1[i] : set2[j];
 				k++;
 				i++;
 				j++;
@@ -371,7 +438,13 @@ public class FollowerStore implements IFollowerStore {
 		}
 		if (k == 0) return null;
 		
-		tempSet = sortByDate(tempSet, k);
+		
+		arrObj = new Object[tempSet.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) tempSet[i];
+		arrObj = sorterD.sort(arrObj, k);
+		for (i = 0; i < arrObj.length; i++)
+			tempSet[i] = (FollowRelation) arrObj[i];
 		
 		int[] retArray = new int[k];
 		for (i = 0; i < k; i++)
@@ -385,10 +458,25 @@ public class FollowerStore implements IFollowerStore {
 		if (set1 == null) return null;
 		FollowRelation[] set2 = getFollowsFR(uid2);
 		if (set2 == null) return null;
-		set1 = sortByLead(set1);
-		set2 = sortByLead(set2);
+		
+		int i = 0;		
+		Object[] arrObj = new Object[set1.length];
+		for (i = 0; i < arrObj.length; i++) 
+			arrObj[i] = (Object) set1[i];
+		arrObj = sorterL.sort(arrObj);
+		for (i = 0; i < arrObj.length; i++)
+			set1[i] = (FollowRelation) arrObj[i];
+
+		arrObj = new Object[set2.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) set2[i];
+		arrObj = sorterL.sort(arrObj);
+		for (i = 0; i < arrObj.length; i++)
+			set2[i] = (FollowRelation) arrObj[i];
+		
+		
 		FollowRelation[] tempSet = new FollowRelation[((set1.length > set2.length) ? set1.length : set2.length)];
-		int i = 0;
+		i = 0;
 		int j = 0;
 		int k = 0;
 		int comp = 0;
@@ -399,23 +487,29 @@ public class FollowerStore implements IFollowerStore {
 			if (comp < 0) i++;
 			else if (comp > 0) j++;
 			else {
-				tempSet[k] = set1[i];
+				tempSet[k] = (set1[i].getDate().compareTo(set2[j].getDate()) > 0) ? set1[i] : set2[j];
 				k++;
 				i++;
 				j++;
 			}
 		}
 		if (k == 0) return null;
-		tempSet = sortByDate(tempSet, k);
+		
+		arrObj = new Object[tempSet.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) tempSet[i];
+		arrObj = sorterD.sort(arrObj, k);
+		for (i = 0; i < arrObj.length; i++)
+			tempSet[i] = (FollowRelation) arrObj[i];
 		
 		int[] retArray = new int[k];
 		for (i = 0; i < k; i++)
 			retArray[i] = tempSet[i].getL();
 		return retArray;
 	}
-		
-	//Something Something LAMBDA FUNCTIONS!!!!
 	
+	//Something Something LAMBDA FUNCTIONS!!!!
+	/*
 	private FollowRelation[] sortByLead(FollowRelation[] arrIn) {
 		//We haven't seen this a thousand times before.
 		
@@ -613,7 +707,7 @@ public class FollowerStore implements IFollowerStore {
 		//System.out.println("End Merge");
 		return retArray;
 		//Done with the merging, let's bring it back up.
-	}
+	}*/
 
 	public int[] getTopUsers() {
 		if (this.FCObjCount == 0) return null;
@@ -631,7 +725,13 @@ public class FollowerStore implements IFollowerStore {
 			}
 		}
 		
-		arrFC = sortByFCount(arrFC);
+		Object[] arrObj = new Object[arrFC.length];
+		for (i = 0; i < arrObj.length; i++)
+			arrObj[i] = (Object) arrFC[i];
+		arrObj = sorterFC.sort(arrObj);
+		for (i = 0; i < arrObj.length; i++)
+			arrFC[i] = (FollowCounter) arrObj[i];
+		
 		int[] retArray = new int[this.FCObjCount];
 		for (i = 0; i < this.FCObjCount; i++)
 			retArray[i] = arrFC[i].getUID();
