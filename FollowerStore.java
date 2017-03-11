@@ -171,33 +171,25 @@ class FCAndPoint {
 
 class SortByLead extends MergeSort {
 	int compFunc(Object a, Object b) {
-		FollowRelation first = (FollowRelation) a;
-		FollowRelation second = (FollowRelation) b;
-		return second.getL() - first.getL();
+		return ((FollowRelation) b).getL() - ((FollowRelation) a).getL();
 	}
 }
 
 class SortByFollow extends MergeSort {
 	int compFunc(Object a, Object b) {
-		FollowRelation first = (FollowRelation) a;
-		FollowRelation second = (FollowRelation) b;
-		return second.getF() - first.getF();
+		return ((FollowRelation) b).getF() - ((FollowRelation) a).getF();
 	}
 }
 
 class SortFRByDate extends MergeSort {
 	int compFunc(Object a, Object b) {
-		FollowRelation first = (FollowRelation) a;
-		FollowRelation second = (FollowRelation) b;
-		return first.getDate().compareTo(second.getDate());
+		return ((FollowRelation) a).compareTo((FollowRelation) b);
 	}
 }
 
 class SortByFCount extends MergeSort {
 	int compFunc(Object a, Object b) {
-		FollowCounter first = (FollowCounter) a;
-		FollowCounter second = (FollowCounter) b;
-		return first.getCount() - second.getCount();
+		return ((FollowCounter) a).compareTo((FollowCounter) b);
 	}
 }
 

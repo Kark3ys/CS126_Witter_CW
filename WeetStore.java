@@ -305,9 +305,7 @@ class DBPDBS extends DateBinarySearch<BucketPointDate> {
 
 class SortByDate extends MergeSort {
 	int compFunc(Object a, Object b) {
-		BucketPointDate first = (BucketPointDate) a;
-		BucketPointDate second = (BucketPointDate) b;
-		return first.getCheck().compareTo(second.getCheck());
+		return ((BucketPointDate) a).getCheck().compareTo(((BucketPointDate) b).getCheck());
 	}
 }
 
@@ -315,7 +313,7 @@ class SortTrends extends MergeSort {
 	int compFunc(Object a, Object b) {
 		Trend first = (Trend) a;
 		Trend second = (Trend) b;
-		return first.getCount() - second.getCount();
+		return ((Trend) a).getCount() - ((Trend) b).getCount();
 	}
 }
 

@@ -68,9 +68,7 @@ class UserDBS extends DateBinarySearch<User> {
 
 class SortByDJ extends MergeSort {
 	int compFunc(Object a, Object b) {
-		User first = (User) a;
-		User second = (User) b;
-		return first.getDateJoined().compareTo(second.getDateJoined());
+		return ((User) a).getDateJoined().compareTo(((User) b).getDateJoined());
 	}
 }
 
