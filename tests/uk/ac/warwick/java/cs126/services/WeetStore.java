@@ -247,6 +247,12 @@ class TrendAndPoint {
 	}
 }
 
+class DBPDBS extends DateBinarySearch<BucketPointDate> {
+	int compFunc(BucketPointDate item, Date target) {
+		return item.getCheck().compareTo(target);
+	}
+}
+
 public class WeetStore implements IWeetStore {
 	private int idHashSize;
 	private int uidHashSize;
@@ -259,6 +265,7 @@ public class WeetStore implements IWeetStore {
 	private BucketPointDate[] dateHashtable;
 	//Hashtable storing buckets of weets based on date.
 	private TrendAndPoint[] trendTable;
+	private DBPDBS searcher;
 	private int weetCount;
 	private int dateCount; //Number of Date Buckets
 	private int uniqueWeetedUsers; //Number of UID Buckets.
@@ -273,6 +280,7 @@ public class WeetStore implements IWeetStore {
 		uidHashtable = new BucketPointUID[uidHashSize];
 		dateHashtable = new BucketPointDate[dateHashSize];
 		trendTable = new TrendAndPoint[trendHashSize];
+		searcher = new DBPDBS();
 		weetCount = 0;		
 		dateCount = 0;
 		uniqueWeetedUsers = 0;
@@ -593,7 +601,8 @@ public class WeetStore implements IWeetStore {
 		BucketPointDate[] dateBuckets = getWeetDateBuckets();
 		Integer count = null;
 		Date date = truncDate(dateBefore);
-		count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
+		//count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
+		count = searcher.search(dateBuckets, date, 0, dateBuckets.length - 1);
 		if (count == null) return null;
 		count += 1;
 		BucketPointDate[] focusedDateBuckets = new BucketPointDate[dateBuckets.length - count];
