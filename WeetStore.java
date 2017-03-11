@@ -91,7 +91,7 @@ class WeetBucket {
 		WeetAndPoint prev = null;
 		WeetAndPoint ptr = head;
 		while (!inserted && ptr != null) {
-			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) < 1) {
+			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) > 0) {
 				//Insert at current position and shif the current ptr down a place
 				inserted = true;
 			} else {
@@ -247,6 +247,28 @@ class TrendAndPoint {
 	}
 }
 
+class DBPDBS extends DateBinarySearch<BucketPointDate> {
+	int compFunc(BucketPointDate item, Date target) {
+		return item.getCheck().compareTo(target);
+	}
+}
+
+class SortByDate extends MergeSort {
+	int compFunc(Object a, Object b) {
+		BucketPointDate first = (BucketPointDate) a;
+		BucketPointDate second = (BucketPointDate) b;
+		return first.getCheck().compareTo(second.getCheck());
+	}
+}
+
+class SortTrends extends MergeSort {
+	int compFunc(Object a, Object b) {
+		Trend first = (Trend) a;
+		Trend second = (Trend) b;
+		return first.getCount() - second.getCount();
+	}
+}
+
 public class WeetStore implements IWeetStore {
 	private int idHashSize;
 	private int uidHashSize;
@@ -259,6 +281,9 @@ public class WeetStore implements IWeetStore {
 	private BucketPointDate[] dateHashtable;
 	//Hashtable storing buckets of weets based on date.
 	private TrendAndPoint[] trendTable;
+	private DBPDBS searcher;
+	private SortByDate sorterDate;
+	private SortTrends sorterTrend;
 	private int weetCount;
 	private int dateCount; //Number of Date Buckets
 	private int uniqueWeetedUsers; //Number of UID Buckets.
@@ -273,6 +298,9 @@ public class WeetStore implements IWeetStore {
 		uidHashtable = new BucketPointUID[uidHashSize];
 		dateHashtable = new BucketPointDate[dateHashSize];
 		trendTable = new TrendAndPoint[trendHashSize];
+		searcher = new DBPDBS();
+		sorterDate = new SortByDate();
+		sorterTrend = new SortTrends();
 		weetCount = 0;		
 		dateCount = 0;
 		uniqueWeetedUsers = 0;
@@ -491,7 +519,13 @@ public class WeetStore implements IWeetStore {
 				}
 			}
 		}
-		dateBuckets = sortByDate(dateBuckets);
+		
+		Object[] result = new Object[dateBuckets.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) dateBuckets[i];
+		result = sorterDate.sort(result);
+		for (i = 0; i < result.length; i++)
+			dateBuckets[i] = (BucketPointDate) result[i];
 
 		return dateBuckets;
 	}
@@ -593,27 +627,12 @@ public class WeetStore implements IWeetStore {
 		BucketPointDate[] dateBuckets = getWeetDateBuckets();
 		Integer count = null;
 		Date date = truncDate(dateBefore);
-		count = binSearchDate(dateBuckets, date, 0, dateBuckets.length - 1);
+		count = searcher.search(dateBuckets, date, 0, dateBuckets.length - 1);
 		if (count == null) return null;
 		count += 1;
 		BucketPointDate[] focusedDateBuckets = new BucketPointDate[dateBuckets.length - count];
 		for (int i = count; i < dateBuckets.length; i++) focusedDateBuckets[i - count] = dateBuckets[i];
 		return extractWeetsFromBuckets(focusedDateBuckets);
-	}
-	
-	private Integer binSearchDate(BucketPointDate[] bpd, Date target, int left, int right) {
-		//Binary search through an array of bpd sorted by date.
-		//Returns the index of the date before and after target.
-		//System.out.println("Bin Sort, Left: " + left + " Right: " + right);
-		if (left == right) return left;
-		int mid = (left+right)/2;
-		//System.out.println("\tMid: " + mid);
-		int comp = bpd[mid].getCheck().compareTo(target);
-		//System.out.println("\tComp: " + comp);
-		if (comp > 0) return binSearchDate(bpd, target, mid+1, right);
-		else if (comp < 0) return binSearchDate(bpd, target, left, mid-1);
-		else if (comp == 0) return mid;
-		return null; //Return null if we get here, something has gone wrong.
 	}
 
 	public String[] getTrending() {
@@ -634,8 +653,13 @@ public class WeetStore implements IWeetStore {
 				temp = temp.getNext();
 			}
 		}
+		Object[] result = new Object[trends.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) trends[i];
+		result = sorterTrend.sort(result);
+		for (i = 0; i < result.length; i++)
+			trends[i] = (Trend) result[i];
 		
-		trends = sortTrends(trends);
 		String[] retArray = new String[10];
 		for (i = 0; i < retArray.length && i < trends.length; i++)
 			retArray[i] = trends[i].getTrend();
@@ -672,156 +696,5 @@ public class WeetStore implements IWeetStore {
 	private Date truncDate(Date date) {
 		//Convert a date object into a date for the start of a particular day.
 		return new Date(date.getTime() / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1));
-	}
-	
-	private BucketPointDate[] sortByDate(BucketPointDate[] arrIn) {
-		//I really need to stop copying and pasting this merge sort and make a more generalised version.
-		
-		//This merge sort is a literal copy paste from UserStore.java.
-		//It's been modified to work with the BucketPoint objects and sort them
-		//By the date stored int their check. As a result it won't work with 
-		//the user buckets, but their used for something different anyway.
-		
-		//Merge sort is implemented here with fixed length arrays.
-		//Used arrays because I really like using arrays from working with
-		//Pascal/Delphi. Making a linked list implemented merge sort would've
-		//saved space, but computers and servers have more than enough memory.
-		//The provided parameter is an array anyways, it would require some effort
-		//just to convert that array into a linked list, then convert the linked 
-		//list back into an array. The other two sorts I was considering, heap and
-		//quicksort, kinda confuse me, so I picked this one instead.
-		//Time Complexity O(n log(n)) 
-		//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
-		//Space Complexity O(n)
-		int length = arrIn.length;	//Find array length for reference.
-		if (length == 1) return arrIn;	//No need to split
-		BucketPointDate[] arrLeft = new BucketPointDate[length/2];
-		BucketPointDate[] arrRight = new BucketPointDate[length - length/2];
-		//Get the left and right side of the array, on odd numbers,
-		//arrLeft.length + 1 == arrRight.length.
-		int i = 0;
-		for (i = 0; i < length/2; i++) arrLeft[i] = arrIn[i];
-		for (i = length/2; i < length; i++) arrRight[i - length/2] = arrIn[i];
-		//Set up the left and right arrays to point at the correct users on the 
-		//left and right of the input array.
-		//System.out.println("Start Recursion");
-		arrLeft = sortByDate(arrLeft);
-		arrRight = sortByDate(arrRight);
-		//Recursion here
-		//System.out.println("End Recursion");
-		//Time to do some merging.
-		BucketPointDate[] retArray = new BucketPointDate[length];
-		i = 0; //Loop counter for left array.
-		int j = 0; //Loop counter for right array.
-		int k = 0; //Loop counter for return array.
-		//System.out.println("Array Lengths: L=" + arrLeft.length + " R=" + arrRight.length);
-		while (i < arrLeft.length && j < arrRight.length) {
-			//System.out.println("Nums: i=" + i + " j=" + j + " k=" + k);
-			//System.out.println("Compare=" + arrLeft[i].getCheck().compareTo(arrRight[j].getCheck()));
-			if(arrLeft[i].getCheck().compareTo(arrRight[j].getCheck()) > 0) {
-				retArray[k] = arrLeft[i];
-				//System.out.println("AddL");
-				i++;
-			} else {
-				retArray[k] = arrRight[j];
-				//System.out.println("AddR");
-				j++;
-			}
-			k++;
-		}
-		//At the end of this loop, just fill in with the other array.
-		while (i < arrLeft.length) {
-			retArray[k] = arrLeft[i];
-			//System.out.println("AddL");
-			i++;
-			k++;
-		}
-		
-		while (j < arrRight.length) {
-			retArray[k] = arrRight[j];
-			//System.out.println("AddR");
-			j++;
-			k++;
-		}
-		
-		arrLeft = arrRight = null; //Dereference our l/r arrays.
-		//System.out.println("End Merge");
-		return retArray;
-		//Done with the merging, let's bring it back up.
-	}
-	
-	private Trend[] sortTrends(Trend[] arrIn) {
-		//This merge sort is a literal copy paste from the on above.
-		//It's been modified to work with the Trend objects and sort them
-		//By their count. Lazy programming ftw.
-		
-		//Merge sort is implemented here with fixed length arrays.
-		//Used arrays because I really like using arrays from working with
-		//Pascal/Delphi. Making a linked list implemented merge sort would've
-		//saved space, but computers and servers have more than enough memory.
-		//The provided parameter is an array anyways, it would require some effort
-		//just to convert that array into a linked list, then convert the linked 
-		//list back into an array. The other two sorts I was considering, heap and
-		//quicksort, kinda confuse me, so I picked this one instead.
-		//Time Complexity O(n log(n)) 
-		//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
-		//Space Complexity O(n)
-		int length = arrIn.length;	//Find array length for reference.
-		//System.out.println(length);
-		if (length == 1) return arrIn;	//No need to split
-		if (length < 1) throw new NullPointerException("You fucked up the merge");
-		Trend[] arrLeft = new Trend[length/2];
-		Trend[] arrRight = new Trend[length - length/2];
-		//Get the left and right side of the array, on odd numbers,
-		//arrLeft.length + 1 == arrRight.length.
-		int i = 0;
-		for (i = 0; i < length/2; i++) arrLeft[i] = arrIn[i];
-		for (i = length/2; i < length; i++) arrRight[i - length/2] = arrIn[i];
-		//Set up the left and right arrays to point at the correct users on the 
-		//left and right of the input array.
-		//System.out.println("Start Recursion");
-		arrLeft = sortTrends(arrLeft);
-		arrRight = sortTrends(arrRight);
-		//Recursion here
-		//System.out.println("End Recursion");
-		//Time to do some merging.
-		Trend[] retArray = new Trend[length];
-		i = 0; //Loop counter for left array.
-		int j = 0; //Loop counter for right array.
-		int k = 0; //Loop counter for return array.
-		//System.out.println("Array Lengths: L=" + arrLeft.length + " R=" + arrRight.length);
-		while (i < arrLeft.length && j < arrRight.length) {
-			//System.out.println("Nums: i=" + i + " j=" + j + " k=" + k);
-			//System.out.println("Compare=" + (arrLeft[i].getCount() - arrRight[j].getCount()));
-			if(arrLeft[i].getCount() > arrRight[j].getCount()) {
-				retArray[k] = arrLeft[i];
-				//System.out.println("AddL");
-				i++;
-			} else {
-				retArray[k] = arrRight[j];
-				//System.out.println("AddR");
-				j++;
-			}
-			k++;
-		}
-		//At the end of this loop, just fill in with the other array.
-		while (i < arrLeft.length) {
-			retArray[k] = arrLeft[i];
-			//System.out.println("AddL");
-			i++;
-			k++;
-		}
-		
-		while (j < arrRight.length) {
-			retArray[k] = arrRight[j];
-			//System.out.println("AddR");
-			j++;
-			k++;
-		}
-		
-		arrLeft = arrRight = null; //Dereference our l/r arrays.
-		//System.out.println("End Merge");
-		return retArray;
-		//Done with the merging, let's bring it back up.
 	}
 }

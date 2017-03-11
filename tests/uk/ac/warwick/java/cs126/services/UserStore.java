@@ -53,6 +53,20 @@ class UserAndPoint {
 	}
 }
 
+class UserDBS extends DateBinarySearch<User> {
+	int compFunc(User item, Date target) {
+		return item.getDateJoined().compareTo(target);
+	}
+}
+
+class SortByDJ extends MergeSort {
+	int compFunc(Object a, Object b) {
+		User first = (User) a;
+		User second = (User) b;
+		return first.getDateJoined().compareTo(second.getDateJoined());
+	}
+}
+
 public class UserStore implements IUserStore {
 	//Implement UserStore as a hashtable based on User.id.
 	//Hash map will have a capacity of 100000.
@@ -62,11 +76,15 @@ public class UserStore implements IUserStore {
 	private int capacity;
 	private UserAndPoint[] hashtable;
 	private int userCount;
+	private UserDBS searcher; 
+	private SortByDJ sorter;
 	
 	public UserStore() {
 		capacity = 100000;
 		hashtable = new UserAndPoint[capacity];
 		userCount = 0;
+		searcher = new UserDBS();
+		sorter = new SortByDJ();
 		//Array is initialized at null.
 	}
 
@@ -121,7 +139,8 @@ public class UserStore implements IUserStore {
 		User[] retArray = new User[userCount];
 		UserAndPoint temp;
 		int j = 0; //Used for end pointer in retArray
-		for (int i = 0; i < capacity; i++) {
+		int i = 0;
+		for (i = 0; i < capacity; i++) {
 			if (hashtable[i] != null) {
 				temp = hashtable[i];
 				while (temp != null) {
@@ -132,7 +151,15 @@ public class UserStore implements IUserStore {
 			}
 		}
 		//Sort by date joined and return the array.
-		return sortByDJ(retArray);
+		//return sortByDJ(retArray);
+		//Stuff to work around Java Generic Arrays.
+		Object[] result = new Object[retArray.length];
+		for (i = 0; i < result.length; i++)
+			result[i] = (Object) retArray[i];
+		result = sorter.sort(result);
+		for (i = 0; i < result.length; i++)
+			retArray[i] = (User) result[i];
+		return retArray;
 	}
 
 	public User[] getUsersContaining(String query) {
@@ -179,7 +206,8 @@ public class UserStore implements IUserStore {
 		//while (arrAllUsers[count].getDateJoined().compareTo(dateBefore) < 0) count++;
 		//Keep looking through the array until we find the date joined which is
 		//equal to or later than the date provided.
-		count = binSearchDate(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
+		count = searcher.search(arrAllUsers, dateBefore, 0, arrAllUsers.length - 1);
+		System.out.println(count);
 		if (count == null) return null;
 		count += 1;
 		User[] retArray = new User[arrAllUsers.length - count];
@@ -194,87 +222,4 @@ public class UserStore implements IUserStore {
 		return uid % this.capacity;
 	}
 	
-	private Integer binSearchDate(User[] users, Date target, int left, int right) {
-		//Binary search through an array of users sorted by date.
-		//Returns the index of the date before and after target.
-		//System.out.println("Bin Sort, Left: " + left + " Right: " + right);
-		if (left == right) return left;
-		int mid = (left+right)/2;
-		//System.out.println("\tMid: " + mid);
-		int comp = users[mid].getDateJoined().compareTo(target);
-		//System.out.println("\tComp: " + comp);
-		if (comp > 0) return binSearchDate(users, target, mid+1, right);
-		else if (comp < 0) return binSearchDate(users, target, left, mid-1);
-		else if (comp == 0) return mid;
-		return null; //Return null if we get here, something has gone wrong.
-	}
-	
-	private User[] sortByDJ(User[] arrIn) {
-		//Merge sort is implemented here with fixed length arrays.
-		//Used arrays because I really like using arrays from working with
-		//Pascal/Delphi. Making a linked list implemented merge sort would've
-		//saved space, but computers and servers have more than enough memory.
-		//The provided parameter is an array anyways, it would require some effort
-		//just to convert that array into a linked list, then convert the linked 
-		//list back into an array. The other two sorts I was considering, heap and
-		//quicksort, kinda confuse me, so I picked this one instead.
-		//Time Complexity O(n log(n)) 
-		//https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/analysis-of-merge-sort
-		//Space Complexity O(n)
-		int length = arrIn.length;	//Find array length for reference.
-		if (length == 1) return arrIn;	//No need to split
-		User[] arrLeft = new User[length/2];
-		User[] arrRight = new User[length - length/2];
-		//Get the left and right side of the array, on odd numbers,
-		//arrLeft.length + 1 == arrRight.length.
-		int i = 0;
-		for (i = 0; i < length/2; i++) arrLeft[i] = arrIn[i];
-		for (i = length/2; i < length; i++) arrRight[i - length/2] = arrIn[i];
-		//Set up the left and right arrays to point at the correct users on the 
-		//left and right of the input array.
-		//System.out.println("Start Recursion");
-		arrLeft = sortByDJ(arrLeft);
-		arrRight = sortByDJ(arrRight);
-		//Recursion here
-		//System.out.println("End Recursion");
-		//Time to do some merging.
-		User[] retArray = new User[length];
-		i = 0; //Loop counter for left array.
-		int j = 0; //Loop counter for right array.
-		int k = 0; //Loop counter for return array.
-		//System.out.println("Array Lengths: L=" + arrLeft.length + " R=" + arrRight.length);
-		while (i < arrLeft.length && j < arrRight.length) {
-			//System.out.println("Nums: i=" + i + " j=" + j + " k=" + k);
-			//System.out.println("Compare=" + arrLeft[i].getDateJoined().compareTo(arrRight[j].getDateJoined()));
-			if(arrLeft[i].getDateJoined().compareTo(arrRight[j].getDateJoined()) > 0) {
-				retArray[k] = arrLeft[i];
-				//System.out.println("AddL");
-				i++;
-			} else {
-				retArray[k] = arrRight[j];
-				//System.out.println("AddR");
-				j++;
-			}
-			k++;
-		}
-		//At the end of this loop, just fill in with the other array.
-		while (i < arrLeft.length) {
-			retArray[k] = arrLeft[i];
-			//System.out.println("AddL");
-			i++;
-			k++;
-		}
-		
-		while (j < arrRight.length) {
-			retArray[k] = arrRight[j];
-			//System.out.println("AddR");
-			j++;
-			k++;
-		}
-		
-		arrLeft = arrRight = null; //Dereference our l/r arrays.
-		//System.out.println("End Merge");
-		return retArray;
-		//Done with the merging, let's bring it back up.
-	}
 }
