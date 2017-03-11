@@ -27,7 +27,7 @@ public abstract class GenericBucket<E> {
 		ItemAndPoint<E> prev = null;
 		ItemAndPoint<E> ptr = head;
 		while (!inserted && ptr != null) {
-			if(compFunc(item, ptr.getCurrent()) < 1) {
+			if(compFunc(item, ptr.getCurrent()) > 0) {
 				//Insert at current position and shif the current ptr down a place
 				inserted = true;
 			} else {
@@ -67,6 +67,10 @@ public abstract class GenericBucket<E> {
 		}
 		
 		return retArray;
+	}
+	
+	public int getCount() {
+		return count;
 	}
 	
 }
