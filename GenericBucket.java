@@ -1,3 +1,5 @@
+package uk.ac.warwick.java.cs126.services;
+
 public abstract class GenericBucket<E> {
 	
 	private ItemAndPoint<E> head;

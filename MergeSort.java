@@ -1,3 +1,5 @@
+package uk.ac.warwick.java.cs126.services;
+
 public abstract class MergeSort<E> {
 	
 	abstract int compFunc(E a, E b);

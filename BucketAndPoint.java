@@ -1,3 +1,5 @@
+package uk.ac.warwick.java.cs126.services;
+
 public class BucketAndPoint<B, C> {
 
 	private C check;
