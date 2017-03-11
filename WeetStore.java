@@ -42,164 +42,41 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-class WeetAndPoint {
+class WeetAndPoint extends ItemAndPoint<Weet> {
 	//Wrapper item for the singly linked list implementation of WeetStore
-	private Weet current;
-	private WeetAndPoint next;
-	
-	public WeetAndPoint(Weet wt) {
-		current = wt;
-		next = null;
-	}
-	
-	public void gottaPointFast(WeetAndPoint youreTooSlow) {
-		next = youreTooSlow;
-	}
-	
-	public Weet getCurrent() {
-		return current;
-	}
-	
-	public WeetAndPoint getNext() {
-		return next;
+	public WeetAndPoint(Weet w) {
+		super(w);
 	}
 }
 
-class WeetBucket {
-	//WeetAndPoint Single Linked Lists sorted by Date.
-	private WeetAndPoint head;
-	private int count;
-
+class WeetBucket extends GenericBucket<Weet> {
 	public WeetBucket() {
-		head = null;
-		count = 0;
+		super();
 	}
 	
-	public boolean insertAndSort(Weet wt) {
-		//Quickly insert the item via an insertion sort with one run through
-		//Time Complexity: O(n)
-		//Means that all weets are sorted by date making it a lot quicker to output
-		//The weets when requested.
-		boolean inserted = false;
-		count++;
-		WeetAndPoint temp = new WeetAndPoint(wt);
-		if (head == null) {
-			head = temp;
-			return true;
-		}
-		Date dateTemp = wt.getDateWeeted();
-		WeetAndPoint prev = null;
-		WeetAndPoint ptr = head;
-		while (!inserted && ptr != null) {
-			if(dateTemp.compareTo(ptr.getCurrent().getDateWeeted()) > 0) {
-				//Insert at current position and shif the current ptr down a place
-				inserted = true;
-			} else {
-				prev = ptr;
-				ptr = ptr.getNext();
-			}
-		}
-		
-		temp.gottaPointFast(ptr);
-		if (prev == null) {
-			//If prev is null, that means the new item is the new head of the list.
-			head = temp;
-		} else {
-			//If prev is set, then the new item needs to go between prev and ptr
-			prev.gottaPointFast(temp);
-		}
-		
-		return true;
-	}	
-	
-	public boolean clear() {
-		head = null;
-		count = 0;
-		return true;
+	int compFunc(Weet a, Weet b) {
+		return a.getDateWeeted().compareTo(b.getDateWeeted());
 	}
 	
 	public Weet[] getWeets() {
-		if (count == 0) return null;
-		Weet[] retArray = new Weet[count];
-		int i = 0;
-		WeetAndPoint ptr = head;
-		while (ptr != null) {
-			retArray[i] = ptr.getCurrent();
-			i++;
-			ptr = ptr.getNext();
-		}
-		
+		Object[] arrObj = super.getEees();
+		Weet[] retArray = new Weet[arrObj.length];
+		for (int i = 0; i < retArray.length; i++)
+			//I hate the lack of generic arrays in java.
+			retArray[i] = (Weet) arrObj[i];
 		return retArray;
 	}
-	
-	public int getCount() {
-		return count;
+}
+
+class BucketPointUID extends BucketAndPoint<WeetBucket, Integer> {
+	public BucketPointUID(Integer ch, WeetBucket wb) {
+		super(ch, wb);
 	}
 }
 
-class BucketPointUID {
-	//Bucket pointer where check is either date or uid.
-	private int check;
-	private WeetBucket current;
-	private BucketPointUID next;
-	
-	public BucketPointUID(int ch, WeetBucket wb) {
-		check = ch;
-		current = wb;
-		next = null;
-	}
-	
-	public void gottaPointFast(BucketPointUID youreTooSlow) {
-		//Sonic Speed: O(1)
-		next = youreTooSlow;
-	}
-	
-	public WeetBucket getCurrent() {
-		return current;
-	}
-	
-	public BucketPointUID getNext() {
-		return next;
-	}
-	
-	public int getCheck() {
-		return check;
-	}
-}
-
-class BucketPointDate {
-	//Bucket pointer where check is either date or uid.
-	private Date check;
-	private WeetBucket current;
-	private BucketPointDate next;
-	
+class BucketPointDate extends BucketAndPoint<WeetBucket, Date> {
 	public BucketPointDate(Date ch, WeetBucket wb) {
-		check = ch;
-		current = wb;
-		next = null;
-	}
-	
-	public BucketPointDate(BucketPointDate bpd) {
-		check = bpd.getCheck();
-		current = bpd.getCurrent();
-		next = null;
-	}
-	
-	public void gottaPointFast(BucketPointDate youreTooSlow) {
-		//Sonic Speed: O(1)
-		next = youreTooSlow;
-	}
-	
-	public WeetBucket getCurrent() {
-		return current;
-	}
-	
-	public BucketPointDate getNext() {
-		return next;
-	}
-	
-	public Date getCheck() {
-		return check;
+		super(ch, wb);
 	}
 }
 
@@ -225,25 +102,14 @@ class Trend {
 	}
 }
 
-class TrendAndPoint {
-	private Trend trend;
-	private TrendAndPoint next;
-	
+class TrendAndPoint extends ItemAndPoint<Trend> {
 	public TrendAndPoint(String tag) {
-		trend = new Trend(tag);
-		next = null;
-	}
-	
-	public void gottaPointFast(TrendAndPoint youreTooSlow) {
-		next = youreTooSlow;
+		super(new Trend(tag));
 	}
 	
 	public Trend getTrend() {
-		return trend;
-	}
-	
-	public TrendAndPoint getNext() {
-		return next;
+		Trend retVal = super.getCurrent();
+		return retVal;
 	}
 }
 
@@ -255,9 +121,7 @@ class DBPDBS extends DateBinarySearch<BucketPointDate> {
 
 class SortByDate extends MergeSort {
 	int compFunc(Object a, Object b) {
-		BucketPointDate first = (BucketPointDate) a;
-		BucketPointDate second = (BucketPointDate) b;
-		return first.getCheck().compareTo(second.getCheck());
+		return ((BucketPointDate) a).getCheck().compareTo(((BucketPointDate) b).getCheck());
 	}
 }
 
@@ -265,7 +129,7 @@ class SortTrends extends MergeSort {
 	int compFunc(Object a, Object b) {
 		Trend first = (Trend) a;
 		Trend second = (Trend) b;
-		return first.getCount() - second.getCount();
+		return ((Trend) a).getCount() - ((Trend) b).getCount();
 	}
 }
 
@@ -362,7 +226,7 @@ public class WeetStore implements IWeetStore {
 		WeetAndPoint prev = null;
 		while (temp != null) {
 			prev = temp;
-			temp = temp.getNext();
+			temp = (WeetAndPoint) temp.getNext();
 		}
 		
 		if (prev == null) {
@@ -389,7 +253,7 @@ public class WeetStore implements IWeetStore {
 		while (!match && temp != null) {
 			match = temp.getCheck().equals(wDate);
 			prev = temp;
-			temp = temp.getNext();
+			temp = (BucketPointDate) temp.getNext();
 		}
 		
 		if (prev == null) {
@@ -404,7 +268,7 @@ public class WeetStore implements IWeetStore {
 			//A match hasn't been found yet buckets exist in this slot.
 			//New bucket needs appending.
 			prev.gottaPointFast(new BucketPointDate(wDate, new WeetBucket()));
-			prev.getNext().getCurrent().insertAndSort(weet);
+			((WeetBucket) prev.getNext().getCurrent()).insertAndSort(weet);
 		}
 		wDate = null;
 		if (!match) dateCount++;
@@ -424,7 +288,7 @@ public class WeetStore implements IWeetStore {
 		while (!match && temp != null) {
 			match = temp.getCheck() == uid;
 			prev = temp;
-			temp = temp.getNext();
+			temp = (BucketPointUID) temp.getNext();
 		}
 		
 		if (prev == null) {
@@ -439,7 +303,7 @@ public class WeetStore implements IWeetStore {
 			//A match hasn't been found yet buckets exist in this slot.
 			//New bucket needs appending.
 			prev.gottaPointFast(new BucketPointUID(uid, new WeetBucket()));
-			prev.getNext().getCurrent().insertAndSort(weet);
+			((WeetBucket) prev.getNext().getCurrent()).insertAndSort(weet);
 		}
 		if (!match) uniqueWeetedUsers++;
 		return true;
@@ -467,7 +331,7 @@ public class WeetStore implements IWeetStore {
 			while (!match && temp != null) {
 				match = temp.getTrend().getTrend().equals(tags[k]);
 				prev = temp;
-				temp = temp.getNext();
+				temp = (TrendAndPoint) temp.getNext();
 			}
 			
 			if (prev == null) {
@@ -487,7 +351,7 @@ public class WeetStore implements IWeetStore {
 		WeetAndPoint check = idHashtable[idHFunc(wid)];
 		while (check != null) {
 			if (check.getCurrent().getId() == wid) return check.getCurrent();
-			check = check.getNext();
+			check = (WeetAndPoint) check.getNext();
 		}
 		return null;
 	}
@@ -515,7 +379,7 @@ public class WeetStore implements IWeetStore {
 				while (temp != null) {
 					dateBuckets[j] = temp;
 					j++;
-					temp = temp.getNext();
+					temp = (BucketPointDate) temp.getNext();
 				}
 			}
 		}
@@ -562,7 +426,7 @@ public class WeetStore implements IWeetStore {
 		boolean match = false;
 		while (!match && temp != null) {
 			match = temp.getCheck() == uid;
-			if (!match) temp = temp.getNext();
+			if (!match) temp = (BucketPointUID) temp.getNext();
 		}
 		if (temp == null) return null;
 		return temp.getCurrent().getWeets();
@@ -613,7 +477,7 @@ public class WeetStore implements IWeetStore {
 		boolean match = false;
 		while (!match && temp != null) {
 			match = temp.getCheck().equals(date);
-			if (!match) temp = temp.getNext();
+			if (!match) temp = (BucketPointDate) temp.getNext();
 		}
 		if (temp == null) return null;	//No weets made on that day.
 		return temp.getCurrent().getWeets();
@@ -650,7 +514,7 @@ public class WeetStore implements IWeetStore {
 			while (temp != null) {
 				trends[j] = temp.getTrend();
 				j++;
-				temp = temp.getNext();
+				temp = (TrendAndPoint) temp.getNext();
 			}
 		}
 		Object[] result = new Object[trends.length];

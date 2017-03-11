@@ -1,3 +1,5 @@
+package uk.ac.warwick.java.cs126.services;
+
 public class ItemAndPoint<E> {
 	private E current;
 	private ItemAndPoint<E> next;

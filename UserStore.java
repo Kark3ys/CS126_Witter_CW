@@ -21,35 +21,15 @@ import uk.ac.warwick.java.cs126.models.User;
 import java.util.Date;
 import java.lang.Math;
 
-class UserAndPoint {
+class UserAndPoint extends ItemAndPoint<User> {
 	//Used to keep track of the users in a hashtable.
 	//Only if there is a collision, but better safe than sorry.
 	//Seeing as I'm using the user ids for the keys in the hash table, it makes
 	//sense to make the comparison between the ids, keeps things easy.
 	//Especially when having to add/get users as it's assumed that ids are
 	//unique.
-	private User current;
-	private UserAndPoint next;
-	
-	public UserAndPoint(User usr) {
-		//When we are provided a new user, we need to point to the provided user, 
-		//then set the next pointer to null.
-		current = usr;
-		next = null;		
-	}
-	
-	public void gottaPointFast(UserAndPoint youreTooSlow) {
-		//Set this current UserAndPoint to point at the provided User, only used
-		//in case of collisions.
-		next = youreTooSlow;
-	}
-	
-	public User getCurrent() {
-		return this.current;
-	}
-	
-	public UserAndPoint getNext() {
-		return this.next;
+	public UserAndPoint(User item) {
+		super(item);
 	}
 }
 
@@ -61,9 +41,7 @@ class UserDBS extends DateBinarySearch<User> {
 
 class SortByDJ extends MergeSort {
 	int compFunc(Object a, Object b) {
-		User first = (User) a;
-		User second = (User) b;
-		return first.getDateJoined().compareTo(second.getDateJoined());
+		return ((User) a).getDateJoined().compareTo(((User) b).getDateJoined());
 	}
 }
 
@@ -100,7 +78,7 @@ public class UserStore implements IUserStore {
 		//Set up some pointers.
 		while (temp != null) {
 			prev = temp;
-			temp = temp.getNext();
+			temp = (UserAndPoint) temp.getNext();
 		}
 		//If the first try wasn't null, keep cycling until it is.
 		if (prev == null) {
@@ -125,7 +103,7 @@ public class UserStore implements IUserStore {
 		UserAndPoint check = hashtable[hashFunction(uid)];
 		while (check != null) {
 			if (check.getCurrent().getId() == uid) return check.getCurrent();
-			check = check.getNext();
+			check = (UserAndPoint) check.getNext();
 		}
 		return null;
 	}
@@ -146,7 +124,7 @@ public class UserStore implements IUserStore {
 				while (temp != null) {
 					retArray[j] = temp.getCurrent();
 					j++;
-					temp = temp.getNext();
+					temp = (UserAndPoint) temp.getNext();
 				}
 			}
 		}
